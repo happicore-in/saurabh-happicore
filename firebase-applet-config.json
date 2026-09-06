@@ -1,0 +1,11 @@
+{
+  "projectId": "saurah-happicore",
+  "appId": "1:689292071306:web:8b861d2d131e4a2faaf873",
+  "apiKey": "AIzaSyDoT2KOaKHJkMzqQ-raVm2NjhLgwGIJT5M",
+  "authDomain": "saurah-happicore.firebaseapp.com",
+  "firestoreDatabaseId": "(default)",
+  "storageBucket": "saurah-happicore.firebasestorage.app",
+  "messagingSenderId": "689292071306",
+  "measurementId": "G-717K7H4NNK",
+  "databaseURL": "https://saurah-happicore-default-rtdb.firebaseio.com"
+}

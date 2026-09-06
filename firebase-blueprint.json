@@ -1,0 +1,167 @@
+{
+  "entities": {
+    "WebProject": {
+      "title": "WebProject",
+      "description": "Portfolio web development project entry",
+      "type": "object",
+      "properties": {
+        "title": { "type": "string", "maxLength": 100 },
+        "tagline": { "type": "string", "maxLength": 200 },
+        "description": { "type": "string", "maxLength": 2000 },
+        "image": { "type": "string", "maxLength": 500 },
+        "liveUrl": { "type": "string", "maxLength": 500 },
+        "githubUrl": { "type": "string", "maxLength": 500 },
+        "technologies": { "type": "array" },
+        "category": { "type": "string", "maxLength": 50 },
+        "featured": { "type": "boolean" },
+        "order": { "type": "number" },
+        "createdAt": { "type": "string" },
+        "updatedAt": { "type": "string" }
+      },
+      "required": ["title", "description"]
+    },
+    "VideoProject": {
+      "title": "VideoProject",
+      "description": "Portfolio video editing project entry with Google Drive video stream and Cloudinary thumbnail",
+      "type": "object",
+      "properties": {
+        "title": { "type": "string", "maxLength": 100 },
+        "description": { "type": "string", "maxLength": 2000 },
+        "thumbnail": { "type": "string", "maxLength": 500 },
+        "duration": { "type": "string", "maxLength": 20 },
+        "googleDriveUrl": { "type": "string", "maxLength": 500 },
+        "wherePosted": { "type": "string", "maxLength": 100 },
+        "socialMediaLink": { "type": "string", "maxLength": 500 },
+        "tools": { "type": "array" },
+        "featured": { "type": "boolean" },
+        "order": { "type": "number" },
+        "createdAt": { "type": "string" },
+        "updatedAt": { "type": "string" }
+      },
+      "required": ["title", "googleDriveUrl"]
+    },
+    "GraphicProject": {
+      "title": "GraphicProject",
+      "description": "Portfolio graphic design project entry with Cloudinary asset",
+      "type": "object",
+      "properties": {
+        "title": { "type": "string", "maxLength": 100 },
+        "description": { "type": "string", "maxLength": 2000 },
+        "image": { "type": "string", "maxLength": 500 },
+        "wherePosted": { "type": "string", "maxLength": 100 },
+        "socialMediaLink": { "type": "string", "maxLength": 500 },
+        "tools": { "type": "array" },
+        "featured": { "type": "boolean" },
+        "order": { "type": "number" },
+        "createdAt": { "type": "string" },
+        "updatedAt": { "type": "string" }
+      },
+      "required": ["title", "image"]
+    },
+    "Experience": {
+      "title": "Experience",
+      "description": "Portfolio career experience record",
+      "type": "object",
+      "properties": {
+        "role": { "type": "string", "maxLength": 100 },
+        "organization": { "type": "string", "maxLength": 100 },
+        "startDate": { "type": "string", "maxLength": 50 },
+        "endDate": { "type": "string", "maxLength": 50 },
+        "current": { "type": "boolean" },
+        "location": { "type": "string", "maxLength": 100 },
+        "description": { "type": "string", "maxLength": 2000 },
+        "responsibilities": { "type": "array" },
+        "tags": { "type": "array" },
+        "order": { "type": "number" },
+        "createdAt": { "type": "string" },
+        "updatedAt": { "type": "string" }
+      },
+      "required": ["role", "organization"]
+    },
+    "ContactEnquiry": {
+      "title": "ContactEnquiry",
+      "description": "Client intake inquiry submitted from public contact form",
+      "type": "object",
+      "properties": {
+        "name": { "type": "string", "maxLength": 100 },
+        "email": { "type": "string", "maxLength": 150 },
+        "projectType": { "type": "string", "maxLength": 50 },
+        "timeline": { "type": "string", "maxLength": 50 },
+        "budget": { "type": "string", "maxLength": 50 },
+        "projectDetails": { "type": "string", "maxLength": 5000 },
+        "referenceLink": { "type": "string", "maxLength": 500 },
+        "createdAt": { "type": "string" },
+        "status": { "type": "string", "enum": ["NEW", "CONTACTED", "IN_PROGRESS", "COMPLETED", "ARCHIVED"] }
+      },
+      "required": ["name", "email", "projectType", "projectDetails"]
+    },
+    "SiteSettings": {
+      "title": "SiteSettings",
+      "description": "Global portfolio configuration, contact channels, and availability",
+      "type": "object",
+      "properties": {
+        "siteName": { "type": "string", "maxLength": 100 },
+        "phone": { "type": "string", "maxLength": 50 },
+        "personalEmail": { "type": "string", "maxLength": 150 },
+        "workEmail": { "type": "string", "maxLength": 150 },
+        "location": { "type": "string", "maxLength": 100 },
+        "linkedin": { "type": "string", "maxLength": 200 },
+        "happicoreName": { "type": "string", "maxLength": 100 },
+        "happicoreUrl": { "type": "string", "maxLength": 200 },
+        "happicoreDescription": { "type": "string", "maxLength": 1000 },
+        "availabilityStatus": { "type": "string", "enum": ["AVAILABLE FOR WORK", "LIMITED AVAILABILITY", "NOT AVAILABLE"] },
+        "availabilityMessage": { "type": "string", "maxLength": 500 },
+        "aboutShortIntro": { "type": "string", "maxLength": 500 },
+        "aboutDescription": { "type": "string", "maxLength": 2000 },
+        "profileImage": { "type": "string", "maxLength": 500 },
+        "updatedAt": { "type": "string" }
+      }
+    },
+    "AboutData": {
+      "title": "AboutData",
+      "description": "Profile biography, education, skills, and tools configuration",
+      "type": "object",
+      "properties": {
+        "profileImage": { "type": "string", "maxLength": 500 },
+        "shortIntro": { "type": "string", "maxLength": 500 },
+        "aboutDescription": { "type": "string", "maxLength": 3000 },
+        "focusAreas": { "type": "array" },
+        "location": { "type": "string", "maxLength": 100 },
+        "availabilityStatus": { "type": "string" },
+        "education": { "type": "object" },
+        "tools": { "type": "array" },
+        "services": { "type": "array" }
+      }
+    }
+  },
+  "firestore": {
+    "/webProjects/{projectId}": {
+      "schema": { "$ref": "#/entities/WebProject" },
+      "description": "Collection of web development projects"
+    },
+    "/videoProjects/{projectId}": {
+      "schema": { "$ref": "#/entities/VideoProject" },
+      "description": "Collection of video editing projects"
+    },
+    "/graphicProjects/{projectId}": {
+      "schema": { "$ref": "#/entities/GraphicProject" },
+      "description": "Collection of graphic design projects"
+    },
+    "/experiences/{experienceId}": {
+      "schema": { "$ref": "#/entities/Experience" },
+      "description": "Collection of professional experiences"
+    },
+    "/contactEnquiries/{enquiryId}": {
+      "schema": { "$ref": "#/entities/ContactEnquiry" },
+      "description": "Collection of client contact enquiries"
+    },
+    "/siteSettings/{settingId}": {
+      "schema": { "$ref": "#/entities/SiteSettings" },
+      "description": "Singleton site configuration document"
+    },
+    "/aboutData/{docId}": {
+      "schema": { "$ref": "#/entities/AboutData" },
+      "description": "About profile and capabilities configuration"
+    }
+  }
+}
