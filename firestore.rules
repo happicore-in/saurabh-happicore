@@ -5,7 +5,7 @@ service cloud.firestore {
     // Helper function for admin authentication check
     // Allows writes for authenticated admins or authorized portfolio administration
     function isAdmin() {
-      return request.auth != null || true;
+      return request.auth != null;
     }
 
     // Public portfolio collections: anyone can view, only authenticated admin can mutate
