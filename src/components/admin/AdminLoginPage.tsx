@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useAdminAuth } from '../../context/AdminAuthContext';
-import { Lock, Mail, ArrowRight, ShieldCheck, LogOut, ArrowLeft, Eye, EyeOff, Check, Copy, Sparkles, AlertTriangle } from 'lucide-react';
+import { Lock, Mail, ArrowRight, ShieldCheck, LogOut, ArrowLeft, Eye, EyeOff, AlertTriangle } from 'lucide-react';
 
 interface AdminLoginPageProps {
   onSuccess: () => void;
@@ -12,29 +12,16 @@ export const AdminLoginPage: React.FC<AdminLoginPageProps> = ({ onSuccess, onBac
     user,
     signInWithEmail,
     signInWithGoogle,
-    signInAsAdmin,
     logout,
     error,
-    authNotice,
     clearError,
     loading: authLoading,
   } = useAdminAuth();
-  const [email, setEmail] = useState('saurabh22102@gmail.com');
+  const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [localError, setLocalError] = useState<string | null>(null);
-  const [copiedDomain, setCopiedDomain] = useState(false);
-
-  const currentDomain = typeof window !== 'undefined' ? window.location.hostname : '';
-
-  const handleCopyDomain = () => {
-    if (currentDomain) {
-      navigator.clipboard.writeText(currentDomain);
-      setCopiedDomain(true);
-      setTimeout(() => setCopiedDomain(false), 2000);
-    }
-  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -66,17 +53,6 @@ export const AdminLoginPage: React.FC<AdminLoginPageProps> = ({ onSuccess, onBac
     }
   };
 
-  const handleDirectAdminAccess = async () => {
-    clearError();
-    setLocalError(null);
-    setIsSubmitting(true);
-    const ok = await signInAsAdmin(email.trim() || 'saurabh22102@gmail.com');
-    setIsSubmitting(false);
-    if (ok) {
-      onSuccess();
-    }
-  };
-
   return (
     <div className="min-h-screen bg-[#000000] text-[#F2F4F7] flex flex-col justify-between selection:bg-[#F5A623] selection:text-[#000000]">
       {/* Top Header Bar */}
@@ -90,7 +66,7 @@ export const AdminLoginPage: React.FC<AdminLoginPageProps> = ({ onSuccess, onBac
               SAURABH PORTFOLIO
             </div>
             <div className="font-mono text-[10px] text-[#6F7682]">
-              ADMIN DASHBOARD // PART 10
+              ADMIN PORTAL
             </div>
           </div>
         </div>
@@ -100,26 +76,23 @@ export const AdminLoginPage: React.FC<AdminLoginPageProps> = ({ onSuccess, onBac
           className="flex items-center gap-2 font-mono text-xs text-[#A7ADB7] hover:text-[#F2F4F7] transition-colors px-3 py-1.5 rounded border border-[#22252A] bg-[#0A0C0F] cursor-pointer"
         >
           <ArrowLeft className="w-3.5 h-3.5" />
-          PUBLIC SITE
+          BACK TO SITE
         </button>
       </header>
 
       {/* Main Login Card */}
       <main className="flex-1 flex items-center justify-center p-4 sm:p-6">
-        <div className="max-w-md w-full bg-[#08090C] border border-[#22252A] rounded-xl p-6 sm:p-8 space-y-6 shadow-2xl relative">
+        <div className="max-w-md w-full bg-[#08090C] border border-[#22252A] rounded-xl p-6 sm:p-8 space-y-6 shadow-2xl">
           {/* Header */}
           <div className="space-y-2 text-center">
             <div className="w-12 h-12 rounded-full bg-[#10131A] border border-[#22252A] flex items-center justify-center mx-auto text-[#8FB8E8]">
               <Lock className="w-5 h-5" />
             </div>
-            <div className="font-mono text-[11px] text-[#F5A623] uppercase tracking-widest">
-              PROTECTED ACCESS
-            </div>
             <h1 className="text-2xl font-bold font-sans tracking-tight text-[#F2F4F7]">
               ADMIN SIGN IN
             </h1>
             <p className="text-xs text-[#A7ADB7] font-sans">
-              Enter credentials or use verified direct access to manage portfolio projects, media, and enquiries.
+              Enter your administrator credentials to continue.
             </p>
           </div>
 
@@ -143,6 +116,7 @@ export const AdminLoginPage: React.FC<AdminLoginPageProps> = ({ onSuccess, onBac
                 <button
                   onClick={logout}
                   className="px-3 py-2 bg-[#1A1D23] hover:bg-[#252A34] text-[#A7ADB7] hover:text-[#FF6B6B] font-mono text-xs rounded border border-[#22252A] flex items-center gap-1.5 transition-colors cursor-pointer"
+                  title="Sign Out"
                 >
                   <LogOut className="w-3.5 h-3.5" />
                 </button>
@@ -150,14 +124,7 @@ export const AdminLoginPage: React.FC<AdminLoginPageProps> = ({ onSuccess, onBac
             </div>
           ) : (
             <>
-              {/* Notice or Error messages */}
-              {authNotice && (
-                <div className="bg-[#0F1A28] border border-[#1F334F] rounded-lg p-3 text-xs font-mono text-[#8FB8E8] flex items-start gap-2">
-                  <Sparkles className="w-4 h-4 text-[#8FB8E8] mt-0.5 flex-shrink-0" />
-                  <div className="flex-1">{authNotice}</div>
-                </div>
-              )}
-
+              {/* Error messages */}
               {(error || localError) && (
                 <div className="bg-[#2D1212] border border-[#501D1D] rounded-lg p-3 text-xs font-mono text-[#FF8080] flex items-start gap-2">
                   <AlertTriangle className="w-4 h-4 text-[#FF4D4D] mt-0.5 flex-shrink-0" />
@@ -166,26 +133,6 @@ export const AdminLoginPage: React.FC<AdminLoginPageProps> = ({ onSuccess, onBac
                   </div>
                 </div>
               )}
-
-              {/* Direct Owner Access Button (Guaranteed Zero-Lockout) */}
-              <button
-                type="button"
-                onClick={handleDirectAdminAccess}
-                disabled={isSubmitting || authLoading}
-                className="w-full py-3 bg-gradient-to-r from-[#8FB8E8] to-[#ADCFF8] hover:from-[#ADCFF8] hover:to-[#CEE5FF] text-[#000000] font-mono text-xs font-bold tracking-wider uppercase rounded-lg flex items-center justify-center gap-2 transition-all shadow-lg cursor-pointer"
-              >
-                <Sparkles className="w-4 h-4 text-[#000000]" />
-                DIRECT ADMIN ACCESS (SAURABH)
-              </button>
-
-              <div className="relative my-3">
-                <div className="absolute inset-0 flex items-center">
-                  <div className="w-full border-t border-[#1C1F26]" />
-                </div>
-                <div className="relative flex justify-center text-[10px] uppercase font-mono text-[#6F7682]">
-                  <span className="bg-[#08090C] px-3">OR SIGN IN WITH CREDENTIALS</span>
-                </div>
-              </div>
 
               {/* Login Form */}
               <form onSubmit={handleSubmit} className="space-y-4">
@@ -197,9 +144,10 @@ export const AdminLoginPage: React.FC<AdminLoginPageProps> = ({ onSuccess, onBac
                     <Mail className="w-4 h-4 text-[#6F7682] absolute left-3 top-1/2 -translate-y-1/2" />
                     <input
                       type="email"
+                      id="admin-email-input"
                       value={email}
                       onChange={(e) => setEmail(e.target.value)}
-                      placeholder="saurabh22102@gmail.com"
+                      placeholder="Enter admin email"
                       required
                       className="w-full bg-[#040507] border border-[#22252A] focus:border-[#8FB8E8] rounded-lg py-2.5 pl-9 pr-3 text-xs text-[#F2F4F7] font-mono placeholder:text-[#4A505C] focus:outline-none transition-colors"
                     />
@@ -214,9 +162,10 @@ export const AdminLoginPage: React.FC<AdminLoginPageProps> = ({ onSuccess, onBac
                     <Lock className="w-4 h-4 text-[#6F7682] absolute left-3 top-1/2 -translate-y-1/2" />
                     <input
                       type={showPassword ? 'text' : 'password'}
+                      id="admin-password-input"
                       value={password}
                       onChange={(e) => setPassword(e.target.value)}
-                      placeholder="••••••••••••"
+                      placeholder="Enter password"
                       required
                       className="w-full bg-[#040507] border border-[#22252A] focus:border-[#8FB8E8] rounded-lg py-2.5 pl-9 pr-10 text-xs text-[#F2F4F7] font-mono placeholder:text-[#4A505C] focus:outline-none transition-colors"
                     />
@@ -224,6 +173,7 @@ export const AdminLoginPage: React.FC<AdminLoginPageProps> = ({ onSuccess, onBac
                       type="button"
                       onClick={() => setShowPassword(!showPassword)}
                       className="absolute right-3 top-1/2 -translate-y-1/2 text-[#6F7682] hover:text-[#F2F4F7] cursor-pointer"
+                      title={showPassword ? 'Hide password' : 'Show password'}
                     >
                       {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                     </button>
@@ -232,34 +182,34 @@ export const AdminLoginPage: React.FC<AdminLoginPageProps> = ({ onSuccess, onBac
 
                 <button
                   type="submit"
+                  id="admin-email-signin-btn"
                   disabled={isSubmitting || authLoading}
                   className="w-full py-3 bg-[#F5A623] hover:bg-[#FFAE33] disabled:opacity-50 text-[#000000] font-mono text-xs font-bold uppercase tracking-wider rounded-lg flex items-center justify-center gap-2 transition-all shadow-lg hover:shadow-[#F5A623]/20 cursor-pointer"
                 >
                   {isSubmitting ? (
                     'AUTHENTICATING...'
                   ) : (
-                    <>
-                      SIGN IN WITH EMAIL →
-                    </>
+                    'SIGN IN WITH EMAIL →'
                   )}
                 </button>
               </form>
 
-              <div className="relative my-3">
+              <div className="relative my-4">
                 <div className="absolute inset-0 flex items-center">
                   <div className="w-full border-t border-[#1C1F26]" />
                 </div>
                 <div className="relative flex justify-center text-[10px] uppercase font-mono text-[#6F7682]">
-                  <span className="bg-[#08090C] px-3">OR GOOGLE AUTHENTICATION</span>
+                  <span className="bg-[#08090C] px-3">OR</span>
                 </div>
               </div>
 
               {/* Google Sign-in */}
               <button
                 type="button"
+                id="admin-google-signin-btn"
                 onClick={handleGoogleSignIn}
                 disabled={isSubmitting || authLoading}
-                className="w-full py-2.5 bg-[#12151B] hover:bg-[#181C24] text-[#F2F4F7] border border-[#22252A] font-mono text-xs font-semibold rounded-lg flex items-center justify-center gap-2 transition-colors cursor-pointer"
+                className="w-full py-2.5 bg-[#12151B] hover:bg-[#181C24] text-[#F2F4F7] border border-[#22252A] font-mono text-xs font-semibold rounded-lg flex items-center justify-center gap-2.5 transition-colors cursor-pointer disabled:opacity-50"
               >
                 <svg className="w-4 h-4" viewBox="0 0 24 24">
                   <path
@@ -279,45 +229,15 @@ export const AdminLoginPage: React.FC<AdminLoginPageProps> = ({ onSuccess, onBac
                     d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"
                   />
                 </svg>
-                SIGN IN WITH GOOGLE
+                CONTINUE WITH GOOGLE
               </button>
-
-              {/* Helpful Domain Authorization Info Box */}
-              {currentDomain && (
-                <div className="bg-[#050608] border border-[#1A1D24] rounded-lg p-3 space-y-1.5 font-mono text-[11px] text-[#6F7682]">
-                  <div className="flex items-center justify-between text-[#8FB8E8] font-bold">
-                    <span>FIREBASE AUTH CONFIGURATION</span>
-                    <button
-                      type="button"
-                      onClick={handleCopyDomain}
-                      className="text-[10px] text-[#F5A623] hover:text-[#FFAE33] flex items-center gap-1 cursor-pointer"
-                    >
-                      {copiedDomain ? (
-                        <>
-                          <Check className="w-3 h-3 text-[#22C55E]" /> COPIED!
-                        </>
-                      ) : (
-                        <>
-                          <Copy className="w-3 h-3" /> COPY HOSTNAME
-                        </>
-                      )}
-                    </button>
-                  </div>
-                  <p className="text-[10px] leading-relaxed text-[#A7ADB7]">
-                    For Google popup auth, add this domain to Firebase Console &gt; Authentication &gt; Settings &gt; Authorized domains:
-                  </p>
-                  <code className="block bg-[#000000] px-2 py-1 rounded text-[#8FB8E8] text-[10px] truncate border border-[#16181E]">
-                    {currentDomain}
-                  </code>
-                </div>
-              )}
             </>
           )}
 
           {/* Footer note */}
           <div className="pt-2 text-center">
-            <p className="font-mono text-[10px] text-[#4A505C]">
-              SECURED BY FIREBASE AUTH & ZERO-TRUST SECURITY RULES
+            <p className="font-mono text-[10px] tracking-wider text-[#4A505C] uppercase">
+              SECURED WITH FIREBASE AUTHENTICATION
             </p>
           </div>
         </div>
@@ -325,9 +245,10 @@ export const AdminLoginPage: React.FC<AdminLoginPageProps> = ({ onSuccess, onBac
 
       {/* Subtle bottom note */}
       <footer className="border-t border-[#16181E] py-4 px-6 text-center font-mono text-[10px] text-[#4A505C]">
-        PORTFOLIO OWNER CONSOLE • REVISION 2026.09 // MAU • UP
+        PORTFOLIO OWNER CONSOLE
       </footer>
     </div>
   );
 };
+
 

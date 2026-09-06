@@ -12,6 +12,7 @@ import { EditingApproachSection } from './EditingApproachSection';
 import { VideoCTA } from './VideoCTA';
 import { VideoDetailModal } from './VideoDetailModal';
 import { ArrowUpDown, Video, Film } from 'lucide-react';
+import { FeaturedHeroSkeleton, ProjectCardSkeleton } from '../common/Skeletons';
 
 interface VideoPageProps {
   onContactClick?: () => void;
@@ -27,35 +28,61 @@ export const VideoPage: React.FC<VideoPageProps> = ({
   const [activeFilter, setActiveFilter] = useState<VideoFilterType>('all');
   const [selectedVideo, setSelectedVideo] = useState<VideoProjectItem | null>(null);
   const [videoData, setVideoData] = useState<{
-    featured: VideoProjectItem;
+    featured: VideoProjectItem | null;
     selected: VideoProjectItem[];
   }>({
-    featured: FEATURED_VIDEO_PROJECT,
-    selected: SELECTED_VIDEO_PROJECTS,
+    featured: null,
+    selected: [],
   });
+  const [isLoading, setIsLoading] = useState<boolean>(true);
 
   useEffect(() => {
-    getPublicVideoProjects().then((res) => {
-      if (res && res.featured) {
-        setVideoData(res);
+    let isMounted = true;
+
+    const loadVideos = async (silent = false) => {
+      try {
+        const res = await getPublicVideoProjects();
+        if (isMounted) {
+          if (res && res.featured) {
+            setVideoData(res);
+          } else {
+            setVideoData({
+              featured: FEATURED_VIDEO_PROJECT,
+              selected: SELECTED_VIDEO_PROJECTS,
+            });
+          }
+          if (!silent) {
+            setIsLoading(false);
+          }
+        }
+      } catch (err) {
+        console.warn('VideoPage load notice:', err);
+        if (isMounted && !silent) {
+          setVideoData({
+            featured: FEATURED_VIDEO_PROJECT,
+            selected: SELECTED_VIDEO_PROJECTS,
+          });
+          setIsLoading(false);
+        }
       }
-    });
+    };
+
+    loadVideos(false);
 
     const handleUpdate = (e: Event) => {
       const ce = e as CustomEvent;
       if (!ce.detail || ce.detail.type === 'video') {
-        getPublicVideoProjects().then((res) => {
-          if (res && res.featured) {
-            setVideoData(res);
-          }
-        });
+        loadVideos(true);
       }
     };
     window.addEventListener('portfolio_data_updated', handleUpdate);
-    return () => window.removeEventListener('portfolio_data_updated', handleUpdate);
+    return () => {
+      isMounted = false;
+      window.removeEventListener('portfolio_data_updated', handleUpdate);
+    };
   }, []);
 
-  const allProjects = [videoData.featured, ...videoData.selected];
+  const allProjects = videoData.featured ? [videoData.featured, ...videoData.selected] : [];
 
   const counts = {
     all: allProjects.length,
@@ -72,7 +99,7 @@ export const VideoPage: React.FC<VideoPageProps> = ({
       : videoData.selected.filter((p) => p.filterCategory === activeFilter);
 
   const showFeatured =
-    activeFilter === 'all' || videoData.featured.filterCategory === activeFilter;
+    videoData.featured && (activeFilter === 'all' || videoData.featured.filterCategory === activeFilter);
 
   // Split into Row 1 (horizontal balanced cards) and Row 2 (with vertical highlight)
   const isAllFilter = activeFilter === 'all';
@@ -95,102 +122,113 @@ export const VideoPage: React.FC<VideoPageProps> = ({
           counts={counts}
         />
 
-        {/* ========================================================
-            2. FEATURED VIDEO (PARADOX 2026 AFTERMOVIE)
-            ======================================================== */}
-        {showFeatured && (
-          <FeaturedVideo
-            project={videoData.featured}
-            onInspect={() => setSelectedVideo(videoData.featured)}
-            onShowNotice={onShowNotice}
-          />
-        )}
-
-        {/* ========================================================
-            3. REGISTRY INDEX // SELECTED VIDEOS
-            ======================================================== */}
-        <div id="selected-videos-section" className="pt-8 pb-12">
-          {/* Section Header */}
-          <div className="flex flex-wrap items-center justify-between gap-3 pb-6 mb-8 border-b border-[#17191D]">
-            <div className="flex items-center gap-3">
-              <span className="font-mono text-[11px] uppercase tracking-[0.18em] text-[#F5A623]">
-                SELECTED VIDEOS
-              </span>
-              <span className="text-[#22252A]">—</span>
-              <h2 className="font-heading font-bold text-xl sm:text-2xl text-[#F2F4F7] uppercase tracking-wide">
-                CURATED MOTION ARCHIVE
-              </h2>
-            </div>
-
-            <div className="flex items-center gap-2 font-mono text-[10px] text-[#6F7682] uppercase tracking-[0.14em]">
-              <ArrowUpDown className="w-3 h-3 text-[#6F7682]" />
-              <span>SORT: CHRONOLOGICAL // REC</span>
+        {/* Loading state: Render skeletons instead of hardcoded baseline flash */}
+        {isLoading ? (
+          <div className="py-6 space-y-12">
+            <FeaturedHeroSkeleton aspect="16/9" />
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+              <ProjectCardSkeleton aspectRatio="16/9" />
+              <ProjectCardSkeleton aspectRatio="16/9" />
             </div>
           </div>
+        ) : (
+          <>
+            {/* ========================================================
+                2. FEATURED VIDEO (PARADOX 2026 AFTERMOVIE)
+                ======================================================== */}
+            {showFeatured && videoData.featured && (
+              <FeaturedVideo
+                project={videoData.featured}
+                onInspect={() => setSelectedVideo(videoData.featured)}
+                onShowNotice={onShowNotice}
+              />
+            )}
 
-          {/* Empty State per Requirement 18 */}
-          {filteredGridProjects.length === 0 && !showFeatured ? (
-            <div className="w-full py-20 text-center border border-[#17191D] rounded-[8px] bg-[#080808] my-8">
-              <Film className="w-9 h-9 text-[#6F7682] mx-auto mb-3" />
-              <h3 className="font-heading font-bold text-lg text-[#F2F4F7] uppercase tracking-wider mb-2">
-                NO VIDEOS YET
-              </h3>
-              <p className="font-body text-xs text-[#6F7682] max-w-xs mx-auto mb-5">
-                Switch back to view all edits or check back soon.
-              </p>
-              <button
-                type="button"
-                onClick={() => setActiveFilter('all')}
-                className="px-4 py-2 bg-[#0D0D0D] hover:bg-[#141414] border border-[#22252A] rounded font-mono text-[11px] uppercase tracking-wider text-[#F5A623] cursor-pointer"
-              >
-                VIEW ALL EDITS
-              </button>
-            </div>
-          ) : isAllFilter ? (
-            /* Editorial Curated Layout (Matching Reference video work.png) */
-            <div className="space-y-8">
-              {/* Row 1: Two-column cinematic horizontal cards */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-8 items-stretch">
-                {row1Projects.map((project) => (
-                  <VideoProjectCard
-                    key={project.id}
-                    project={project}
-                    onInspect={() => setSelectedVideo(project)}
-                    onShowNotice={onShowNotice}
-                  />
-                ))}
-              </div>
+            {/* ========================================================
+                3. REGISTRY INDEX // SELECTED VIDEOS
+                ======================================================== */}
+            <div id="selected-videos-section" className="pt-8 pb-12">
+              {/* Section Header */}
+              <div className="flex flex-wrap items-center justify-between gap-3 pb-6 mb-8 border-b border-[#17191D]">
+                <div className="flex items-center gap-3">
+                  <span className="font-mono text-[11px] uppercase tracking-[0.18em] text-[#F5A623]">
+                    SELECTED VIDEOS
+                  </span>
+                  <span className="text-[#22252A]">—</span>
+                  <h2 className="font-heading font-bold text-xl sm:text-2xl text-[#F2F4F7] uppercase tracking-wide">
+                    CURATED MOTION ARCHIVE
+                  </h2>
+                </div>
 
-              {/* Row 2: 3-column curated row with vertical 9:16 reel highlight */}
-              <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-stretch">
-                {/* 9:16 Vertical Highlight (Span 4 on large screens) */}
-                {row2Projects[0] && (
-                  <div className="lg:col-span-4">
-                    <VideoProjectCard
-                      project={row2Projects[0]}
-                      onInspect={() => setSelectedVideo(row2Projects[0])}
-                      onShowNotice={onShowNotice}
-                    />
-                  </div>
-                )}
-
-                {/* Two 16:9 cards in remaining 8 columns */}
-                <div className="lg:col-span-8 grid grid-cols-1 sm:grid-cols-2 gap-8 items-stretch">
-                  {row2Projects.slice(1).map((project) => (
-                    <VideoProjectCard
-                      key={project.id}
-                      project={project}
-                      onInspect={() => setSelectedVideo(project)}
-                      onShowNotice={onShowNotice}
-                    />
-                  ))}
+                <div className="flex items-center gap-2 font-mono text-[10px] text-[#6F7682] uppercase tracking-[0.14em]">
+                  <ArrowUpDown className="w-3 h-3 text-[#6F7682]" />
+                  <span>SORT: CHRONOLOGICAL // REC</span>
                 </div>
               </div>
-            </div>
-          ) : (
-            /* Filtered Category Grid */
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 items-stretch">
-              {filteredGridProjects.map((project) => (
+
+              {/* Empty State per Requirement 18 */}
+              {filteredGridProjects.length === 0 && !showFeatured ? (
+                <div className="w-full py-20 text-center border border-[#17191D] rounded-[8px] bg-[#080808] my-8">
+                  <Film className="w-9 h-9 text-[#6F7682] mx-auto mb-3" />
+                  <h3 className="font-heading font-bold text-lg text-[#F2F4F7] uppercase tracking-wider mb-2">
+                    NO VIDEOS YET
+                  </h3>
+                  <p className="font-body text-xs text-[#6F7682] max-w-xs mx-auto mb-5">
+                    Switch back to view all edits or check back soon.
+                  </p>
+                  <button
+                    type="button"
+                    onClick={() => setActiveFilter('all')}
+                    className="px-4 py-2 bg-[#0D0D0D] hover:bg-[#141414] border border-[#22252A] rounded font-mono text-[11px] uppercase tracking-wider text-[#F5A623] cursor-pointer"
+                  >
+                    VIEW ALL EDITS
+                  </button>
+                </div>
+              ) : isAllFilter ? (
+                /* Editorial Curated Layout (Matching Reference video work.png) */
+                <div className="space-y-8">
+                  {/* Row 1: Two-column cinematic horizontal cards */}
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-8 items-stretch">
+                    {row1Projects.map((project) => (
+                      <VideoProjectCard
+                        key={project.id}
+                        project={project}
+                        onInspect={() => setSelectedVideo(project)}
+                        onShowNotice={onShowNotice}
+                      />
+                    ))}
+                  </div>
+
+                  {/* Row 2: 3-column curated row with vertical 9:16 reel highlight */}
+                  <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-stretch">
+                    {/* 9:16 Vertical Highlight (Span 4 on large screens) */}
+                    {row2Projects[0] && (
+                      <div className="lg:col-span-4">
+                        <VideoProjectCard
+                          project={row2Projects[0]}
+                          onInspect={() => setSelectedVideo(row2Projects[0])}
+                          onShowNotice={onShowNotice}
+                        />
+                      </div>
+                    )}
+
+                    {/* Two 16:9 cards in remaining 8 columns */}
+                    <div className="lg:col-span-8 grid grid-cols-1 sm:grid-cols-2 gap-8 items-stretch">
+                      {row2Projects.slice(1).map((project) => (
+                        <VideoProjectCard
+                          key={project.id}
+                          project={project}
+                          onInspect={() => setSelectedVideo(project)}
+                          onShowNotice={onShowNotice}
+                        />
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              ) : (
+                /* Filtered Category Grid */
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 items-stretch">
+                  {filteredGridProjects.map((project) => (
                 <VideoProjectCard
                   key={project.id}
                   project={project}
@@ -201,6 +239,8 @@ export const VideoPage: React.FC<VideoPageProps> = ({
             </div>
           )}
         </div>
+          </>
+        )}
 
         {/* ========================================================
             4. HOW I EDIT // EDITING APPROACH

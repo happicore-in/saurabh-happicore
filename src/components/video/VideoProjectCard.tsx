@@ -22,8 +22,6 @@ export const VideoProjectCard: React.FC<VideoProjectCardProps> = ({
     } else {
       if (onShowNotice) {
         onShowNotice('Google Drive video link coming soon for this cut.');
-      } else {
-        alert('VIDEO LINK COMING SOON');
       }
     }
   };
@@ -35,8 +33,6 @@ export const VideoProjectCard: React.FC<VideoProjectCardProps> = ({
     } else {
       if (onShowNotice) {
         onShowNotice('Social media post link coming soon for this release.');
-      } else {
-        alert('WHERE POSTED LINK COMING SOON');
       }
     }
   };
@@ -63,6 +59,8 @@ export const VideoProjectCard: React.FC<VideoProjectCardProps> = ({
         <img
           src={project.thumbnail}
           alt={project.title}
+          loading="lazy"
+          decoding="async"
           referrerPolicy="no-referrer"
           className="w-full h-full object-cover object-center filter contrast-[1.04] brightness-90 group-hover:scale-[1.03] transition-transform duration-700 ease-out"
         />

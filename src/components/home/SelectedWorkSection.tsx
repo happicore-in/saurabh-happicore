@@ -3,6 +3,7 @@ import { ArrowRight, Play, ExternalLink, Sparkles } from 'lucide-react';
 import paradoxImg from '../../assets/images/paradox_aftermovie_1788625281034.jpg';
 import webDevImg from '../../assets/images/web_dev_project_1788625300809.jpg';
 import { getPublicHomeFeaturedProjects, PublicHomeFeaturedItem } from '../../services/portfolioDataService';
+import { SelectedWorkSectionSkeleton } from '../common/Skeletons';
 
 interface SelectedWorkSectionProps {
   onViewAllWork?: () => void;
@@ -81,25 +82,33 @@ export const SelectedWorkSection: React.FC<SelectedWorkSectionProps> = ({
   onViewAllWork,
   onProjectClick,
 }) => {
-  const [projects, setProjects] = useState<PublicHomeFeaturedItem[]>(DEFAULT_FEATURED);
+  const [projects, setProjects] = useState<PublicHomeFeaturedItem[]>([]);
+  const [isLoading, setIsLoading] = useState<boolean>(true);
 
   useEffect(() => {
     let isMounted = true;
-    const loadFeatured = async () => {
+    const loadFeatured = async (silent = false) => {
       try {
         const list = await getPublicHomeFeaturedProjects();
-        if (isMounted && list && list.length > 0) {
-          setProjects(list);
+        if (isMounted) {
+          setProjects(list && list.length > 0 ? list : DEFAULT_FEATURED);
+          if (!silent) {
+            setIsLoading(false);
+          }
         }
       } catch (err) {
-        console.warn('SelectedWorkSection load error:', err);
+        console.warn('SelectedWorkSection load notice:', err);
+        if (isMounted && !silent) {
+          setProjects(DEFAULT_FEATURED);
+          setIsLoading(false);
+        }
       }
     };
 
-    loadFeatured();
+    loadFeatured(false);
 
     const handleUpdate = () => {
-      loadFeatured();
+      loadFeatured(true);
     };
 
     window.addEventListener('portfolio_data_updated', handleUpdate);
@@ -109,7 +118,7 @@ export const SelectedWorkSection: React.FC<SelectedWorkSectionProps> = ({
     };
   }, []);
 
-  const heroProject = projects[0] || DEFAULT_FEATURED[0];
+  const heroProject = projects[0];
   const gridProjects = projects.slice(1);
 
   const renderBadgeIcon = (type: string, isHero = false) => {
@@ -142,122 +151,131 @@ export const SelectedWorkSection: React.FC<SelectedWorkSectionProps> = ({
           </p>
         </div>
 
-        {/* WORK GRID */}
+        {/* WORK GRID OR SKELETON */}
         <div className="pt-12 space-y-12">
-          
-          {/* 1. LARGE HERO CARD */}
-          <div
-            onClick={() => onProjectClick?.(heroProject.id)}
-            className="group relative w-full bg-[#080808] border border-[#22252A] rounded-[8px] overflow-hidden cursor-pointer transition-all duration-300 hover:border-[#8FB8E8]/40"
-          >
-            <div className="grid grid-cols-1 lg:grid-cols-12 gap-0">
-              
-              {/* Image side (16:9 on mobile, span 7 or 8 on desktop) */}
-              <div className="lg:col-span-8 relative aspect-[16/9] lg:aspect-auto lg:min-h-[460px] overflow-hidden bg-[#0D0D0D]">
-                <img
-                  src={heroProject.image}
-                  alt={heroProject.title}
-                  referrerPolicy="no-referrer"
-                  className="w-full h-full object-cover object-center filter contrast-[1.05] brightness-90 transition-transform duration-700 ease-out group-hover:scale-105"
-                />
-                <div className="absolute inset-0 bg-gradient-to-t lg:bg-gradient-to-r from-transparent via-transparent to-[#080808]/90 pointer-events-none" />
-                
-                {/* Play indicator badge */}
-                <div className="absolute top-4 left-4 inline-flex items-center gap-2 px-3 py-1.5 bg-[#000000]/80 backdrop-blur-md border border-[#22252A] rounded-full font-mono text-[11px] text-[#F2F4F7] tracking-wider uppercase">
-                  {renderBadgeIcon(heroProject.type, true)}
-                  <span>{heroProject.badgeLabel}</span>
-                </div>
-              </div>
-
-              {/* Text side */}
-              <div className="lg:col-span-4 p-6 sm:p-8 lg:p-10 flex flex-col justify-between space-y-6">
-                <div className="space-y-4">
-                  <div className="flex items-center justify-between text-[11px] font-mono tracking-[0.14em] uppercase text-[#8FB8E8]">
-                    <span>{heroProject.categoryLabel}</span>
-                    <span className="text-[#6F7682]">{heroProject.year}</span>
-                  </div>
-
-                  <h3 className="font-heading font-bold text-2xl sm:text-3xl text-[#F2F4F7] uppercase tracking-wide group-hover:text-[#8FB8E8] transition-colors">
-                    {heroProject.title}
-                  </h3>
-
-                  <p className="font-body text-[14px] sm:text-[15px] text-[#A7ADB7] leading-relaxed">
-                    {heroProject.description}
-                  </p>
-
-                  <div className="flex flex-wrap gap-2 pt-2">
-                    {heroProject.tags.map((tag) => (
-                      <span key={tag} className="px-2.5 py-1 bg-[#111111] border border-[#22252A] rounded text-[10px] font-mono text-[#6F7682] uppercase tracking-wider">
-                        {tag}
-                      </span>
-                    ))}
-                  </div>
-                </div>
-
-                <div className="pt-4 border-t border-[#17191D] flex items-center justify-between">
-                  <span className="group-hover:translate-x-1 inline-flex items-center gap-2 font-mono text-[12px] uppercase tracking-[0.1em] text-[#F2F4F7] group-hover:text-[#8FB8E8] transition-all">
-                    <span>VIEW PROJECT</span>
-                    <ArrowRight className="w-4 h-4 text-[#8FB8E8]" />
-                  </span>
-                  <span className="font-mono text-[11px] text-[#6F7682]">
-                    {heroProject.role}
-                  </span>
-                </div>
-              </div>
-
-            </div>
-          </div>
-
-          {/* 2. TWO-COLUMN ROW / REMAINING FEATURED PROJECTS */}
-          {gridProjects.length > 0 && (
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-              {gridProjects.map((proj) => (
-                <div
-                  key={proj.id}
-                  onClick={() => onProjectClick?.(proj.id)}
-                  className="group relative bg-[#080808] border border-[#22252A] rounded-[8px] overflow-hidden cursor-pointer transition-all duration-300 hover:border-[#8FB8E8]/40 flex flex-col justify-between"
-                >
-                  <div className="relative aspect-[16/10] overflow-hidden bg-[#0D0D0D]">
+          {isLoading ? (
+            <SelectedWorkSectionSkeleton />
+          ) : heroProject ? (
+            <>
+              {/* 1. LARGE HERO CARD */}
+              <div
+                onClick={() => onProjectClick?.(heroProject.id)}
+                className="group relative w-full bg-[#080808] border border-[#22252A] rounded-[8px] overflow-hidden cursor-pointer transition-all duration-300 hover:border-[#8FB8E8]/40"
+              >
+                <div className="grid grid-cols-1 lg:grid-cols-12 gap-0">
+                  
+                  {/* Image side (16:9 on mobile, span 7 or 8 on desktop) */}
+                  <div className="lg:col-span-8 relative aspect-[16/9] lg:aspect-auto lg:min-h-[460px] overflow-hidden bg-[#0D0D0D]">
                     <img
-                      src={proj.image}
-                      alt={proj.title}
+                      src={heroProject.image}
+                      alt={heroProject.title}
+                      loading="lazy"
+                      decoding="async"
                       referrerPolicy="no-referrer"
-                      className="w-full h-full object-cover object-center filter contrast-[1.1] brightness-85 transition-transform duration-700 ease-out group-hover:scale-105"
+                      className="w-full h-full object-cover object-center filter contrast-[1.05] brightness-90 transition-transform duration-700 ease-out group-hover:scale-105"
                     />
-                    <div className="absolute top-3 left-3 inline-flex items-center gap-1.5 px-2.5 py-1 bg-[#000000]/80 backdrop-blur-md border border-[#22252A] rounded-full font-mono text-[10px] text-[#F2F4F7] tracking-wider uppercase">
-                      {renderBadgeIcon(proj.type, false)}
-                      <span>{proj.badgeLabel}</span>
+                    <div className="absolute inset-0 bg-gradient-to-t lg:bg-gradient-to-r from-transparent via-transparent to-[#080808]/90 pointer-events-none" />
+                    
+                    {/* Play indicator badge */}
+                    <div className="absolute top-4 left-4 inline-flex items-center gap-2 px-3 py-1.5 bg-[#000000]/80 backdrop-blur-md border border-[#22252A] rounded-full font-mono text-[11px] text-[#F2F4F7] tracking-wider uppercase">
+                      {renderBadgeIcon(heroProject.type, true)}
+                      <span>{heroProject.badgeLabel}</span>
                     </div>
                   </div>
 
-                  <div className="p-6 space-y-4 flex-1 flex flex-col justify-between">
-                    <div className="space-y-2">
-                      <div className="flex items-center justify-between text-[11px] font-mono tracking-[0.12em] uppercase text-[#8FB8E8]">
-                        <span>{proj.categoryLabel}</span>
-                        <span className="text-[#6F7682]">{proj.year}</span>
+                  {/* Text side */}
+                  <div className="lg:col-span-4 p-6 sm:p-8 lg:p-10 flex flex-col justify-between space-y-6">
+                    <div className="space-y-4">
+                      <div className="flex items-center justify-between text-[11px] font-mono tracking-[0.14em] uppercase text-[#8FB8E8]">
+                        <span>{heroProject.categoryLabel}</span>
+                        <span className="text-[#6F7682]">{heroProject.year}</span>
                       </div>
-                      <h3 className="font-heading font-bold text-xl sm:text-2xl text-[#F2F4F7] uppercase tracking-wide group-hover:text-[#8FB8E8] transition-colors">
-                        {proj.title}
+
+                      <h3 className="font-heading font-bold text-2xl sm:text-3xl text-[#F2F4F7] uppercase tracking-wide group-hover:text-[#8FB8E8] transition-colors">
+                        {heroProject.title}
                       </h3>
-                      <p className="font-body text-[14px] text-[#A7ADB7] leading-relaxed">
-                        {proj.description}
+
+                      <p className="font-body text-[14px] sm:text-[15px] text-[#A7ADB7] leading-relaxed">
+                        {heroProject.description}
                       </p>
+
+                      <div className="flex flex-wrap gap-2 pt-2">
+                        {heroProject.tags.map((tag) => (
+                          <span key={tag} className="px-2.5 py-1 bg-[#111111] border border-[#22252A] rounded text-[10px] font-mono text-[#6F7682] uppercase tracking-wider">
+                            {tag}
+                          </span>
+                        ))}
+                      </div>
                     </div>
 
                     <div className="pt-4 border-t border-[#17191D] flex items-center justify-between">
-                      <span className="inline-flex items-center gap-1.5 font-mono text-[11px] uppercase tracking-[0.1em] text-[#F2F4F7] group-hover:text-[#8FB8E8] transition-colors">
+                      <span className="group-hover:translate-x-1 inline-flex items-center gap-2 font-mono text-[12px] uppercase tracking-[0.1em] text-[#F2F4F7] group-hover:text-[#8FB8E8] transition-all">
                         <span>VIEW PROJECT</span>
-                        <ArrowRight className="w-3.5 h-3.5" />
+                        <ArrowRight className="w-4 h-4 text-[#8FB8E8]" />
                       </span>
-                      <span className="font-mono text-[10px] text-[#6F7682]">
-                        {proj.role}
+                      <span className="font-mono text-[11px] text-[#6F7682]">
+                        {heroProject.role}
                       </span>
                     </div>
                   </div>
+
                 </div>
-              ))}
-            </div>
-          )}
+              </div>
+
+              {/* 2. TWO-COLUMN ROW / REMAINING FEATURED PROJECTS */}
+              {gridProjects.length > 0 && (
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                  {gridProjects.map((proj) => (
+                    <div
+                      key={proj.id}
+                      onClick={() => onProjectClick?.(proj.id)}
+                      className="group relative bg-[#080808] border border-[#22252A] rounded-[8px] overflow-hidden cursor-pointer transition-all duration-300 hover:border-[#8FB8E8]/40 flex flex-col justify-between"
+                    >
+                      <div className="relative aspect-[16/10] overflow-hidden bg-[#0D0D0D]">
+                        <img
+                          src={proj.image}
+                          alt={proj.title}
+                          loading="lazy"
+                          decoding="async"
+                          referrerPolicy="no-referrer"
+                          className="w-full h-full object-cover object-center filter contrast-[1.1] brightness-85 transition-transform duration-700 ease-out group-hover:scale-105"
+                        />
+                        <div className="absolute top-3 left-3 inline-flex items-center gap-1.5 px-2.5 py-1 bg-[#000000]/80 backdrop-blur-md border border-[#22252A] rounded-full font-mono text-[10px] text-[#F2F4F7] tracking-wider uppercase">
+                          {renderBadgeIcon(proj.type, false)}
+                          <span>{proj.badgeLabel}</span>
+                        </div>
+                      </div>
+
+                      <div className="p-6 space-y-4 flex-1 flex flex-col justify-between">
+                        <div className="space-y-2">
+                          <div className="flex items-center justify-between text-[11px] font-mono tracking-[0.12em] uppercase text-[#8FB8E8]">
+                            <span>{proj.categoryLabel}</span>
+                            <span className="text-[#6F7682]">{proj.year}</span>
+                          </div>
+                          <h3 className="font-heading font-bold text-xl sm:text-2xl text-[#F2F4F7] uppercase tracking-wide group-hover:text-[#8FB8E8] transition-colors">
+                            {proj.title}
+                          </h3>
+                          <p className="font-body text-[14px] text-[#A7ADB7] leading-relaxed">
+                            {proj.description}
+                          </p>
+                        </div>
+
+                        <div className="pt-4 border-t border-[#17191D] flex items-center justify-between">
+                          <span className="inline-flex items-center gap-1.5 font-mono text-[11px] uppercase tracking-[0.1em] text-[#F2F4F7] group-hover:text-[#8FB8E8] transition-colors">
+                            <span>VIEW PROJECT</span>
+                            <ArrowRight className="w-3.5 h-3.5" />
+                          </span>
+                          <span className="font-mono text-[10px] text-[#6F7682]">
+                            {proj.role}
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </>
+          ) : null}
 
           {/* VIEW ALL WORK BUTTON */}
           <div className="pt-8 text-center">
@@ -276,3 +294,4 @@ export const SelectedWorkSection: React.FC<SelectedWorkSectionProps> = ({
     </section>
   );
 };
+

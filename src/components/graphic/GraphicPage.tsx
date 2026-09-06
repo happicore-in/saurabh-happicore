@@ -12,6 +12,7 @@ import { GraphicLightbox } from './GraphicLightbox';
 import { GraphicApproachSection } from './GraphicApproachSection';
 import { GraphicCTA } from './GraphicCTA';
 import { ArrowUpDown, Image as ImageIcon } from 'lucide-react';
+import { FeaturedHeroSkeleton, ProjectCardSkeleton } from '../common/Skeletons';
 
 interface GraphicPageProps {
   onContactClick?: () => void;
@@ -27,35 +28,61 @@ export const GraphicPage: React.FC<GraphicPageProps> = ({
   const [activeFilter, setActiveFilter] = useState<GraphicFilterType>('all');
   const [lightboxProject, setLightboxProject] = useState<GraphicProjectItem | null>(null);
   const [graphicData, setGraphicData] = useState<{
-    featured: GraphicProjectItem;
+    featured: GraphicProjectItem | null;
     selected: GraphicProjectItem[];
   }>({
-    featured: FEATURED_GRAPHIC_PROJECT,
-    selected: SELECTED_GRAPHIC_PROJECTS,
+    featured: null,
+    selected: [],
   });
+  const [isLoading, setIsLoading] = useState<boolean>(true);
 
   useEffect(() => {
-    getPublicGraphicProjects().then((res) => {
-      if (res && res.featured) {
-        setGraphicData(res);
+    let isMounted = true;
+
+    const loadGraphics = async (silent = false) => {
+      try {
+        const res = await getPublicGraphicProjects();
+        if (isMounted) {
+          if (res && res.featured) {
+            setGraphicData(res);
+          } else {
+            setGraphicData({
+              featured: FEATURED_GRAPHIC_PROJECT,
+              selected: SELECTED_GRAPHIC_PROJECTS,
+            });
+          }
+          if (!silent) {
+            setIsLoading(false);
+          }
+        }
+      } catch (err) {
+        console.warn('GraphicPage load notice:', err);
+        if (isMounted && !silent) {
+          setGraphicData({
+            featured: FEATURED_GRAPHIC_PROJECT,
+            selected: SELECTED_GRAPHIC_PROJECTS,
+          });
+          setIsLoading(false);
+        }
       }
-    });
+    };
+
+    loadGraphics(false);
 
     const handleUpdate = (e: Event) => {
       const ce = e as CustomEvent;
       if (!ce.detail || ce.detail.type === 'graphic') {
-        getPublicGraphicProjects().then((res) => {
-          if (res && res.featured) {
-            setGraphicData(res);
-          }
-        });
+        loadGraphics(true);
       }
     };
     window.addEventListener('portfolio_data_updated', handleUpdate);
-    return () => window.removeEventListener('portfolio_data_updated', handleUpdate);
+    return () => {
+      isMounted = false;
+      window.removeEventListener('portfolio_data_updated', handleUpdate);
+    };
   }, []);
 
-  const allProjects = [graphicData.featured, ...graphicData.selected];
+  const allProjects = graphicData.featured ? [graphicData.featured, ...graphicData.selected] : [];
 
   const counts = {
     all: allProjects.length,
@@ -71,7 +98,7 @@ export const GraphicPage: React.FC<GraphicPageProps> = ({
       : graphicData.selected.filter((p) => p.filterCategory === activeFilter);
 
   const showFeatured =
-    activeFilter === 'all' || graphicData.featured.filterCategory === activeFilter;
+    graphicData.featured && (activeFilter === 'all' || graphicData.featured.filterCategory === activeFilter);
 
   // Split selected projects into rows for the curated 'all' layout
   const isAllFilter = activeFilter === 'all';
@@ -104,16 +131,27 @@ export const GraphicPage: React.FC<GraphicPageProps> = ({
           counts={counts}
         />
 
-        {/* ========================================================
-            2. FEATURED GRAPHIC WORK (CAMPUSRUN 2025 MARATHON POSTER)
-            ======================================================== */}
-        {showFeatured && (
-          <FeaturedGraphicWork
-            project={graphicData.featured}
-            onOpenLightbox={() => setLightboxProject(graphicData.featured)}
-            onShowNotice={onShowNotice}
-          />
-        )}
+        {/* Loading state: Render skeletons instead of hardcoded baseline flash */}
+        {isLoading ? (
+          <div className="py-6 space-y-12">
+            <FeaturedHeroSkeleton aspect="4/5" />
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+              <ProjectCardSkeleton aspectRatio="16/9" />
+              <ProjectCardSkeleton aspectRatio="16/9" />
+            </div>
+          </div>
+        ) : (
+          <>
+            {/* ========================================================
+                2. FEATURED GRAPHIC WORK (CAMPUSRUN 2025 MARATHON POSTER)
+                ======================================================== */}
+            {showFeatured && graphicData.featured && (
+              <FeaturedGraphicWork
+                project={graphicData.featured}
+                onOpenLightbox={() => setLightboxProject(graphicData.featured)}
+                onShowNotice={onShowNotice}
+              />
+            )}
 
         {/* ========================================================
             3. SELECTED GRAPHIC WORK // CURATED EDITORIAL GRID
@@ -206,6 +244,8 @@ export const GraphicPage: React.FC<GraphicPageProps> = ({
             </div>
           )}
         </div>
+          </>
+        )}
 
         {/* ========================================================
             4. DESIGN APPROACH & ARSENAL

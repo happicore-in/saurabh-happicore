@@ -245,7 +245,53 @@ const STORAGE_KEYS = {
   GRAPHIC: 'saurabh_admin_graphic_projects',
   EXPERIENCE: 'saurabh_admin_experiences',
   SETTINGS: 'saurabh_admin_settings',
+  ABOUT: 'saurabh_portfolio_about',
 };
+
+// In-memory cache for instant subsequent reads and cross-component sharing
+interface MemoryCacheStore {
+  web?: AdminWebProject[];
+  video?: AdminVideoProject[];
+  graphic?: AdminGraphicProject[];
+  experience?: AdminExperience[];
+  about?: AdminAboutData;
+  settings?: AdminSiteSettings;
+  featuredHome?: PublicHomeFeaturedItem[];
+}
+
+const memoryCache: MemoryCacheStore = {};
+const inFlightPromises: { [key: string]: Promise<any> | undefined } = {};
+
+/**
+ * Invalidate in-memory cache when data changes or force-refresh is requested.
+ */
+export function invalidatePortfolioDataCache(type?: 'web' | 'video' | 'graphic' | 'experience' | 'about' | 'settings' | 'all') {
+  if (!type || type === 'all') {
+    delete memoryCache.web;
+    delete memoryCache.video;
+    delete memoryCache.graphic;
+    delete memoryCache.experience;
+    delete memoryCache.about;
+    delete memoryCache.settings;
+    delete memoryCache.featuredHome;
+  } else if (type === 'web') {
+    delete memoryCache.web;
+    delete memoryCache.featuredHome;
+  } else if (type === 'video') {
+    delete memoryCache.video;
+    delete memoryCache.featuredHome;
+  } else if (type === 'graphic') {
+    delete memoryCache.graphic;
+    delete memoryCache.featuredHome;
+  } else if (type === 'experience') {
+    delete memoryCache.experience;
+  } else if (type === 'about') {
+    delete memoryCache.about;
+  } else if (type === 'settings') {
+    delete memoryCache.settings;
+    delete memoryCache.featuredHome;
+  }
+}
 
 // Resilient promise timeout to prevent hanging when offline or experiencing intermittent connectivity
 async function withFirestoreTimeout<T>(promise: Promise<T>, ms = 3000): Promise<T> {
@@ -263,29 +309,50 @@ async function withFirestoreTimeout<T>(promise: Promise<T>, ms = 3000): Promise<
 }
 
 // Web Projects API
-export async function getWebProjects(): Promise<AdminWebProject[]> {
-  try {
-    const snap = await withFirestoreTimeout(getDocs(collection(db, 'webProjects')), 3000);
-    if (!snap.empty) {
-      const list: AdminWebProject[] = [];
-      snap.forEach((d) => list.push({ ...d.data(), id: d.id } as AdminWebProject));
-      list.sort((a, b) => (a.order || 0) - (b.order || 0));
-      localStorage.setItem(STORAGE_KEYS.WEB, JSON.stringify(list));
-      return list;
-    }
-  } catch (err) {
-    console.warn('Firestore fetch web projects error, reading cache:', err);
+export async function getWebProjects(forceRefresh = false): Promise<AdminWebProject[]> {
+  if (!forceRefresh && memoryCache.web && memoryCache.web.length > 0) {
+    return memoryCache.web;
   }
 
-  const cached = localStorage.getItem(STORAGE_KEYS.WEB);
-  if (cached) {
-    try {
-      return JSON.parse(cached);
-    } catch {
-      // ignore
-    }
+  if (inFlightPromises.web) {
+    return inFlightPromises.web;
   }
-  return BASELINE_WEB_PROJECTS;
+
+  const promise = (async () => {
+    try {
+      const snap = await withFirestoreTimeout(getDocs(collection(db, 'webProjects')), 3000);
+      if (!snap.empty) {
+        const list: AdminWebProject[] = [];
+        snap.forEach((d) => list.push({ ...d.data(), id: d.id } as AdminWebProject));
+        list.sort((a, b) => (a.order || 0) - (b.order || 0));
+        localStorage.setItem(STORAGE_KEYS.WEB, JSON.stringify(list));
+        memoryCache.web = list;
+        return list;
+      }
+    } catch (err) {
+      console.warn('Firestore fetch web projects notice (using cache/baseline):', err);
+    }
+
+    const cached = localStorage.getItem(STORAGE_KEYS.WEB);
+    if (cached) {
+      try {
+        const parsed = JSON.parse(cached);
+        memoryCache.web = parsed;
+        return parsed;
+      } catch {
+        // ignore
+      }
+    }
+    memoryCache.web = BASELINE_WEB_PROJECTS;
+    return BASELINE_WEB_PROJECTS;
+  })();
+
+  inFlightPromises.web = promise;
+  try {
+    return await promise;
+  } finally {
+    delete inFlightPromises.web;
+  }
 }
 
 export async function saveWebProject(project: AdminWebProject): Promise<AdminWebProject> {
@@ -306,9 +373,11 @@ export async function saveWebProject(project: AdminWebProject): Promise<AdminWeb
   }
 
   // Update cache
-  const list = await getWebProjects();
+  invalidatePortfolioDataCache('web');
+  const list = await getWebProjects(true);
   const updated = isNew ? [...list, data] : list.map((p) => (p.id === id ? data : p));
   localStorage.setItem(STORAGE_KEYS.WEB, JSON.stringify(updated));
+  memoryCache.web = updated;
   window.dispatchEvent(new CustomEvent('portfolio_data_updated', { detail: { type: 'web', item: data } }));
   return data;
 }
@@ -319,37 +388,60 @@ export async function deleteWebProject(id: string): Promise<boolean> {
   } catch (err) {
     console.warn('Firestore delete error:', err);
   }
-  const list = await getWebProjects();
+  invalidatePortfolioDataCache('web');
+  const list = await getWebProjects(true);
   const filtered = list.filter((p) => p.id !== id);
   localStorage.setItem(STORAGE_KEYS.WEB, JSON.stringify(filtered));
+  memoryCache.web = filtered;
   window.dispatchEvent(new CustomEvent('portfolio_data_updated', { detail: { type: 'web', deletedId: id } }));
   return true;
 }
 
 // Video Projects API
-export async function getVideoProjects(): Promise<AdminVideoProject[]> {
-  try {
-    const snap = await withFirestoreTimeout(getDocs(collection(db, 'videoProjects')), 3000);
-    if (!snap.empty) {
-      const list: AdminVideoProject[] = [];
-      snap.forEach((d) => list.push({ ...d.data(), id: d.id } as AdminVideoProject));
-      list.sort((a, b) => (a.order || 0) - (b.order || 0));
-      localStorage.setItem(STORAGE_KEYS.VIDEO, JSON.stringify(list));
-      return list;
-    }
-  } catch (err) {
-    console.warn('Firestore fetch video projects error, reading cache:', err);
+export async function getVideoProjects(forceRefresh = false): Promise<AdminVideoProject[]> {
+  if (!forceRefresh && memoryCache.video && memoryCache.video.length > 0) {
+    return memoryCache.video;
   }
 
-  const cached = localStorage.getItem(STORAGE_KEYS.VIDEO);
-  if (cached) {
-    try {
-      return JSON.parse(cached);
-    } catch {
-      // ignore
-    }
+  if (inFlightPromises.video) {
+    return inFlightPromises.video;
   }
-  return BASELINE_VIDEO_PROJECTS;
+
+  const promise = (async () => {
+    try {
+      const snap = await withFirestoreTimeout(getDocs(collection(db, 'videoProjects')), 3000);
+      if (!snap.empty) {
+        const list: AdminVideoProject[] = [];
+        snap.forEach((d) => list.push({ ...d.data(), id: d.id } as AdminVideoProject));
+        list.sort((a, b) => (a.order || 0) - (b.order || 0));
+        localStorage.setItem(STORAGE_KEYS.VIDEO, JSON.stringify(list));
+        memoryCache.video = list;
+        return list;
+      }
+    } catch (err) {
+      console.warn('Firestore fetch video projects notice (using cache/baseline):', err);
+    }
+
+    const cached = localStorage.getItem(STORAGE_KEYS.VIDEO);
+    if (cached) {
+      try {
+        const parsed = JSON.parse(cached);
+        memoryCache.video = parsed;
+        return parsed;
+      } catch {
+        // ignore
+      }
+    }
+    memoryCache.video = BASELINE_VIDEO_PROJECTS;
+    return BASELINE_VIDEO_PROJECTS;
+  })();
+
+  inFlightPromises.video = promise;
+  try {
+    return await promise;
+  } finally {
+    delete inFlightPromises.video;
+  }
 }
 
 export async function saveVideoProject(project: AdminVideoProject): Promise<AdminVideoProject> {
@@ -369,9 +461,11 @@ export async function saveVideoProject(project: AdminVideoProject): Promise<Admi
     console.warn('Firestore save video project error:', err);
   }
 
-  const list = await getVideoProjects();
+  invalidatePortfolioDataCache('video');
+  const list = await getVideoProjects(true);
   const updated = isNew ? [...list, data] : list.map((p) => (p.id === id ? data : p));
   localStorage.setItem(STORAGE_KEYS.VIDEO, JSON.stringify(updated));
+  memoryCache.video = updated;
   window.dispatchEvent(new CustomEvent('portfolio_data_updated', { detail: { type: 'video', item: data } }));
   return data;
 }
@@ -382,37 +476,60 @@ export async function deleteVideoProject(id: string): Promise<boolean> {
   } catch (err) {
     console.warn('Firestore delete error:', err);
   }
-  const list = await getVideoProjects();
+  invalidatePortfolioDataCache('video');
+  const list = await getVideoProjects(true);
   const filtered = list.filter((p) => p.id !== id);
   localStorage.setItem(STORAGE_KEYS.VIDEO, JSON.stringify(filtered));
+  memoryCache.video = filtered;
   window.dispatchEvent(new CustomEvent('portfolio_data_updated', { detail: { type: 'video', deletedId: id } }));
   return true;
 }
 
 // Graphic Projects API
-export async function getGraphicProjects(): Promise<AdminGraphicProject[]> {
-  try {
-    const snap = await withFirestoreTimeout(getDocs(collection(db, 'graphicProjects')), 3000);
-    if (!snap.empty) {
-      const list: AdminGraphicProject[] = [];
-      snap.forEach((d) => list.push({ ...d.data(), id: d.id } as AdminGraphicProject));
-      list.sort((a, b) => (a.order || 0) - (b.order || 0));
-      localStorage.setItem(STORAGE_KEYS.GRAPHIC, JSON.stringify(list));
-      return list;
-    }
-  } catch (err) {
-    console.warn('Firestore fetch graphic projects error, reading cache:', err);
+export async function getGraphicProjects(forceRefresh = false): Promise<AdminGraphicProject[]> {
+  if (!forceRefresh && memoryCache.graphic && memoryCache.graphic.length > 0) {
+    return memoryCache.graphic;
   }
 
-  const cached = localStorage.getItem(STORAGE_KEYS.GRAPHIC);
-  if (cached) {
-    try {
-      return JSON.parse(cached);
-    } catch {
-      // ignore
-    }
+  if (inFlightPromises.graphic) {
+    return inFlightPromises.graphic;
   }
-  return BASELINE_GRAPHIC_PROJECTS;
+
+  const promise = (async () => {
+    try {
+      const snap = await withFirestoreTimeout(getDocs(collection(db, 'graphicProjects')), 3000);
+      if (!snap.empty) {
+        const list: AdminGraphicProject[] = [];
+        snap.forEach((d) => list.push({ ...d.data(), id: d.id } as AdminGraphicProject));
+        list.sort((a, b) => (a.order || 0) - (b.order || 0));
+        localStorage.setItem(STORAGE_KEYS.GRAPHIC, JSON.stringify(list));
+        memoryCache.graphic = list;
+        return list;
+      }
+    } catch (err) {
+      console.warn('Firestore fetch graphic projects notice (using cache/baseline):', err);
+    }
+
+    const cached = localStorage.getItem(STORAGE_KEYS.GRAPHIC);
+    if (cached) {
+      try {
+        const parsed = JSON.parse(cached);
+        memoryCache.graphic = parsed;
+        return parsed;
+      } catch {
+        // ignore
+      }
+    }
+    memoryCache.graphic = BASELINE_GRAPHIC_PROJECTS;
+    return BASELINE_GRAPHIC_PROJECTS;
+  })();
+
+  inFlightPromises.graphic = promise;
+  try {
+    return await promise;
+  } finally {
+    delete inFlightPromises.graphic;
+  }
 }
 
 export async function saveGraphicProject(project: AdminGraphicProject): Promise<AdminGraphicProject> {
@@ -432,9 +549,11 @@ export async function saveGraphicProject(project: AdminGraphicProject): Promise<
     console.warn('Firestore save graphic project error:', err);
   }
 
-  const list = await getGraphicProjects();
+  invalidatePortfolioDataCache('graphic');
+  const list = await getGraphicProjects(true);
   const updated = isNew ? [...list, data] : list.map((p) => (p.id === id ? data : p));
   localStorage.setItem(STORAGE_KEYS.GRAPHIC, JSON.stringify(updated));
+  memoryCache.graphic = updated;
   window.dispatchEvent(new CustomEvent('portfolio_data_updated', { detail: { type: 'graphic', item: data } }));
   return data;
 }
@@ -445,37 +564,60 @@ export async function deleteGraphicProject(id: string): Promise<boolean> {
   } catch (err) {
     console.warn('Firestore delete error:', err);
   }
-  const list = await getGraphicProjects();
+  invalidatePortfolioDataCache('graphic');
+  const list = await getGraphicProjects(true);
   const filtered = list.filter((p) => p.id !== id);
   localStorage.setItem(STORAGE_KEYS.GRAPHIC, JSON.stringify(filtered));
+  memoryCache.graphic = filtered;
   window.dispatchEvent(new CustomEvent('portfolio_data_updated', { detail: { type: 'graphic', deletedId: id } }));
   return true;
 }
 
 // Experience API
-export async function getExperiences(): Promise<AdminExperience[]> {
-  try {
-    const snap = await withFirestoreTimeout(getDocs(collection(db, 'experiences')), 3000);
-    if (!snap.empty) {
-      const list: AdminExperience[] = [];
-      snap.forEach((d) => list.push({ ...d.data(), id: d.id } as AdminExperience));
-      list.sort((a, b) => (a.order || 0) - (b.order || 0));
-      localStorage.setItem(STORAGE_KEYS.EXPERIENCE, JSON.stringify(list));
-      return list;
-    }
-  } catch (err) {
-    console.warn('Firestore fetch experiences error, reading cache:', err);
+export async function getExperiences(forceRefresh = false): Promise<AdminExperience[]> {
+  if (!forceRefresh && memoryCache.experience && memoryCache.experience.length > 0) {
+    return memoryCache.experience;
   }
 
-  const cached = localStorage.getItem(STORAGE_KEYS.EXPERIENCE);
-  if (cached) {
-    try {
-      return JSON.parse(cached);
-    } catch {
-      // ignore
-    }
+  if (inFlightPromises.experience) {
+    return inFlightPromises.experience;
   }
-  return BASELINE_EXPERIENCES;
+
+  const promise = (async () => {
+    try {
+      const snap = await withFirestoreTimeout(getDocs(collection(db, 'experiences')), 3000);
+      if (!snap.empty) {
+        const list: AdminExperience[] = [];
+        snap.forEach((d) => list.push({ ...d.data(), id: d.id } as AdminExperience));
+        list.sort((a, b) => (a.order || 0) - (b.order || 0));
+        localStorage.setItem(STORAGE_KEYS.EXPERIENCE, JSON.stringify(list));
+        memoryCache.experience = list;
+        return list;
+      }
+    } catch (err) {
+      console.warn('Firestore fetch experiences notice (using cache/baseline):', err);
+    }
+
+    const cached = localStorage.getItem(STORAGE_KEYS.EXPERIENCE);
+    if (cached) {
+      try {
+        const parsed = JSON.parse(cached);
+        memoryCache.experience = parsed;
+        return parsed;
+      } catch {
+        // ignore
+      }
+    }
+    memoryCache.experience = BASELINE_EXPERIENCES;
+    return BASELINE_EXPERIENCES;
+  })();
+
+  inFlightPromises.experience = promise;
+  try {
+    return await promise;
+  } finally {
+    delete inFlightPromises.experience;
+  }
 }
 
 export async function saveExperience(exp: AdminExperience): Promise<AdminExperience> {
@@ -495,9 +637,11 @@ export async function saveExperience(exp: AdminExperience): Promise<AdminExperie
     console.warn('Firestore save experience error:', err);
   }
 
-  const list = await getExperiences();
+  invalidatePortfolioDataCache('experience');
+  const list = await getExperiences(true);
   const updated = isNew ? [...list, data] : list.map((e) => (e.id === id ? data : e));
   localStorage.setItem(STORAGE_KEYS.EXPERIENCE, JSON.stringify(updated));
+  memoryCache.experience = updated;
   window.dispatchEvent(new CustomEvent('portfolio_data_updated', { detail: { type: 'experience', item: data } }));
   return data;
 }
@@ -508,9 +652,11 @@ export async function deleteExperience(id: string): Promise<boolean> {
   } catch (err) {
     console.warn('Firestore delete error:', err);
   }
-  const list = await getExperiences();
+  invalidatePortfolioDataCache('experience');
+  const list = await getExperiences(true);
   const filtered = list.filter((e) => e.id !== id);
   localStorage.setItem(STORAGE_KEYS.EXPERIENCE, JSON.stringify(filtered));
+  memoryCache.experience = filtered;
   window.dispatchEvent(new CustomEvent('portfolio_data_updated', { detail: { type: 'experience', deletedId: id } }));
   return true;
 }
@@ -530,7 +676,9 @@ export async function reorderExperiences(items: AdminExperience[]): Promise<Admi
     console.warn('Firestore reorder experiences error:', err);
   }
 
+  invalidatePortfolioDataCache('experience');
   localStorage.setItem(STORAGE_KEYS.EXPERIENCE, JSON.stringify(updatedItems));
+  memoryCache.experience = updatedItems;
   window.dispatchEvent(new CustomEvent('portfolio_data_updated', { detail: { type: 'experience', reordered: true } }));
   return updatedItems;
 }
@@ -567,27 +715,48 @@ export const BASELINE_ABOUT_DATA: AdminAboutData = {
   })),
 };
 
-export async function getAboutData(): Promise<AdminAboutData> {
-  try {
-    const snap = await withFirestoreTimeout(getDoc(doc(db, 'aboutData', 'main')), 3000);
-    if (snap.exists()) {
-      const data = snap.data() as AdminAboutData;
-      localStorage.setItem('saurabh_portfolio_about', JSON.stringify(data));
-      return data;
-    }
-  } catch (err) {
-    console.warn('Firestore fetch about error, reading cache:', err);
+export async function getAboutData(forceRefresh = false): Promise<AdminAboutData> {
+  if (!forceRefresh && memoryCache.about) {
+    return memoryCache.about;
   }
 
-  const cached = localStorage.getItem('saurabh_portfolio_about');
-  if (cached) {
-    try {
-      return JSON.parse(cached);
-    } catch {
-      // ignore
-    }
+  if (inFlightPromises.about) {
+    return inFlightPromises.about;
   }
-  return BASELINE_ABOUT_DATA;
+
+  const promise = (async () => {
+    try {
+      const snap = await withFirestoreTimeout(getDoc(doc(db, 'aboutData', 'main')), 3000);
+      if (snap.exists()) {
+        const data = snap.data() as AdminAboutData;
+        localStorage.setItem(STORAGE_KEYS.ABOUT, JSON.stringify(data));
+        memoryCache.about = data;
+        return data;
+      }
+    } catch (err) {
+      console.warn('Firestore fetch about notice (using cache/baseline):', err);
+    }
+
+    const cached = localStorage.getItem(STORAGE_KEYS.ABOUT);
+    if (cached) {
+      try {
+        const parsed = JSON.parse(cached);
+        memoryCache.about = parsed;
+        return parsed;
+      } catch {
+        // ignore
+      }
+    }
+    memoryCache.about = BASELINE_ABOUT_DATA;
+    return BASELINE_ABOUT_DATA;
+  })();
+
+  inFlightPromises.about = promise;
+  try {
+    return await promise;
+  } finally {
+    delete inFlightPromises.about;
+  }
 }
 
 export async function saveAboutData(data: AdminAboutData): Promise<AdminAboutData> {
@@ -597,40 +766,62 @@ export async function saveAboutData(data: AdminAboutData): Promise<AdminAboutDat
     console.warn('Firestore save about error:', err);
   }
 
-  localStorage.setItem('saurabh_portfolio_about', JSON.stringify(data));
+  invalidatePortfolioDataCache('about');
+  localStorage.setItem(STORAGE_KEYS.ABOUT, JSON.stringify(data));
+  memoryCache.about = data;
   window.dispatchEvent(new CustomEvent('portfolio_data_updated', { detail: { type: 'about', item: data } }));
   return data;
 }
 
 // Site Settings API
-export async function getSiteSettings(): Promise<AdminSiteSettings> {
-  try {
-    const snap = await withFirestoreTimeout(getDoc(doc(db, 'siteSettings', 'global')), 3000);
-    if (snap.exists()) {
-      const data = snap.data() as AdminSiteSettings;
-      localStorage.setItem(STORAGE_KEYS.SETTINGS, JSON.stringify(data));
-      return data;
-    }
-  } catch (err) {
-    console.warn('Firestore fetch settings error, reading cache:', err);
+export async function getSiteSettings(forceRefresh = false): Promise<AdminSiteSettings> {
+  if (!forceRefresh && memoryCache.settings) {
+    return memoryCache.settings;
   }
 
-  const cached = localStorage.getItem(STORAGE_KEYS.SETTINGS);
-  if (cached) {
-    try {
-      const parsed = JSON.parse(cached);
-      if (parsed.cloudinary?.cloudName === 'dpxq9o7kv' || !parsed.cloudinary?.cloudName) {
-        parsed.cloudinary = {
-          cloudName: 'pegfrsqo',
-          uploadPreset: 'portfolio_upload',
-        };
-      }
-      return parsed;
-    } catch {
-      // ignore
-    }
+  if (inFlightPromises.settings) {
+    return inFlightPromises.settings;
   }
-  return BASELINE_SITE_SETTINGS;
+
+  const promise = (async () => {
+    try {
+      const snap = await withFirestoreTimeout(getDoc(doc(db, 'siteSettings', 'global')), 3000);
+      if (snap.exists()) {
+        const data = snap.data() as AdminSiteSettings;
+        localStorage.setItem(STORAGE_KEYS.SETTINGS, JSON.stringify(data));
+        memoryCache.settings = data;
+        return data;
+      }
+    } catch (err) {
+      console.warn('Firestore fetch settings notice (using cache/baseline):', err);
+    }
+
+    const cached = localStorage.getItem(STORAGE_KEYS.SETTINGS);
+    if (cached) {
+      try {
+        const parsed = JSON.parse(cached);
+        if (parsed.cloudinary?.cloudName === 'dpxq9o7kv' || !parsed.cloudinary?.cloudName) {
+          parsed.cloudinary = {
+            cloudName: 'pegfrsqo',
+            uploadPreset: 'portfolio_upload',
+          };
+        }
+        memoryCache.settings = parsed;
+        return parsed;
+      } catch {
+        // ignore
+      }
+    }
+    memoryCache.settings = BASELINE_SITE_SETTINGS;
+    return BASELINE_SITE_SETTINGS;
+  })();
+
+  inFlightPromises.settings = promise;
+  try {
+    return await promise;
+  } finally {
+    delete inFlightPromises.settings;
+  }
 }
 
 export async function saveSiteSettings(settings: Partial<AdminSiteSettings>): Promise<AdminSiteSettings> {
@@ -647,7 +838,9 @@ export async function saveSiteSettings(settings: Partial<AdminSiteSettings>): Pr
     console.warn('Firestore save settings error:', err);
   }
 
+  invalidatePortfolioDataCache('settings');
   localStorage.setItem(STORAGE_KEYS.SETTINGS, JSON.stringify(updated));
+  memoryCache.settings = updated;
   window.dispatchEvent(new CustomEvent('portfolio_data_updated', { detail: { type: 'settings', item: updated } }));
   return updated;
 }

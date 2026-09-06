@@ -195,7 +195,7 @@ export const Header: React.FC<HeaderProps> = ({
             id="mobile-menu-toggle"
             type="button"
             onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-            className="p-2 text-[#A7ADB7] hover:text-[#F2F4F7] focus:outline-none focus:ring-1 focus:ring-[#8FB8E8] rounded-[4px]"
+            className="min-w-[44px] min-h-[44px] flex items-center justify-center text-[#A7ADB7] hover:text-[#F2F4F7] focus:outline-none focus:ring-1 focus:ring-[#8FB8E8] rounded-[4px]"
             aria-label="Toggle navigation menu"
           >
             {mobileMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
@@ -210,12 +210,12 @@ export const Header: React.FC<HeaderProps> = ({
             NAVIGATION // {brandName.toUpperCase()} PORTFOLIO
           </div>
 
-          <div className="flex flex-col space-y-3 font-mono text-[14px] uppercase tracking-wider">
+          <div className="flex flex-col space-y-1 font-mono text-[14px] uppercase tracking-wider">
             {NAVIGATION_ITEMS.map((item) => (
-              <div key={item.id} className="space-y-2">
+              <div key={item.id} className="space-y-1">
                 <button
                   onClick={(e) => handleLinkClick(item.id, e)}
-                  className={`text-left py-1 w-full flex items-center justify-between ${
+                  className={`text-left min-h-[44px] py-2 px-1 w-full flex items-center justify-between ${
                     activeSection === item.id ? 'text-[#8FB8E8] font-semibold' : 'text-[#F2F4F7]'
                   }`}
                 >
@@ -224,12 +224,12 @@ export const Header: React.FC<HeaderProps> = ({
                 </button>
 
                 {item.dropdown && (
-                  <div className="pl-4 py-1 space-y-2 border-l border-[#22252A] ml-1">
+                  <div className="pl-4 py-1 space-y-1 border-l border-[#22252A] ml-2">
                     {item.dropdown.map((sub) => (
                       <button
                         key={sub.id}
                         onClick={(e) => handleLinkClick(sub.id, e)}
-                        className="block text-left text-[12px] text-[#A7ADB7] hover:text-[#8FB8E8] py-1"
+                        className="block text-left min-h-[40px] flex items-center text-[12px] text-[#A7ADB7] hover:text-[#8FB8E8] py-1 px-1 w-full"
                       >
                         {sub.label}
                       </button>

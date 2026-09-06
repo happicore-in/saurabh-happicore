@@ -40,6 +40,8 @@ export const GraphicProjectCard: React.FC<GraphicProjectCardProps> = ({
             <img
               src={project.image}
               alt={project.title}
+              loading="lazy"
+              decoding="async"
               referrerPolicy="no-referrer"
               className="w-full h-full object-cover object-center filter contrast-[1.04] group-hover:scale-[1.02] transition-transform duration-700 ease-out"
             />
@@ -138,6 +140,8 @@ export const GraphicProjectCard: React.FC<GraphicProjectCardProps> = ({
         <img
           src={project.image}
           alt={project.title}
+          loading="lazy"
+          decoding="async"
           referrerPolicy="no-referrer"
           className="w-full h-full object-cover object-center filter contrast-[1.04] brightness-95 group-hover:scale-[1.03] transition-transform duration-700 ease-out"
         />

@@ -3,26 +3,51 @@ import { ExperienceCard } from './ExperienceCard';
 import { EXPERIENCE_ITEMS } from '../../data/experienceData';
 import { ExperienceItem } from '../../types';
 import { getPublicExperiences } from '../../services/portfolioDataService';
+import { ExperienceTimelineSkeleton } from '../common/Skeletons';
 
 export const ExperienceTimeline: React.FC = () => {
-  const [items, setItems] = useState<ExperienceItem[]>(EXPERIENCE_ITEMS);
+  const [items, setItems] = useState<ExperienceItem[]>([]);
+  const [isLoading, setIsLoading] = useState<boolean>(true);
 
   useEffect(() => {
-    getPublicExperiences().then((list) => {
-      if (list && list.length > 0) setItems(list);
-    });
+    let isMounted = true;
+
+    const loadExperiences = async (silent = false) => {
+      try {
+        const list = await getPublicExperiences();
+        if (isMounted) {
+          setItems(list && list.length > 0 ? list : EXPERIENCE_ITEMS);
+          if (!silent) {
+            setIsLoading(false);
+          }
+        }
+      } catch (err) {
+        console.warn('ExperienceTimeline load notice:', err);
+        if (isMounted && !silent) {
+          setItems(EXPERIENCE_ITEMS);
+          setIsLoading(false);
+        }
+      }
+    };
+
+    loadExperiences(false);
 
     const handleUpdate = (e: Event) => {
       const ce = e as CustomEvent;
       if (!ce.detail || ce.detail.type === 'experience') {
-        getPublicExperiences().then((list) => {
-          if (list && list.length > 0) setItems(list);
-        });
+        loadExperiences(true);
       }
     };
     window.addEventListener('portfolio_data_updated', handleUpdate);
-    return () => window.removeEventListener('portfolio_data_updated', handleUpdate);
+    return () => {
+      isMounted = false;
+      window.removeEventListener('portfolio_data_updated', handleUpdate);
+    };
   }, []);
+
+  if (isLoading) {
+    return <ExperienceTimelineSkeleton count={3} />;
+  }
 
   return (
     <div className="relative">
