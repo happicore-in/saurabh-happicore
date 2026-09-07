@@ -8,12 +8,11 @@ export const IDENTITY = {
   website: 'happicore.in',
   emailWork: 'happicore.in@gmail.com',
   emailPersonal: 'saurabhcore31@gmail.com',
-  phone: '+91 8127122102',
+  phone: '+91 81271xxxxx',
   linkedin: 'https://linkedin.com/in/saurabh-0732a8372',
   education: 'BS DATA SCIENCE & APPLICATIONS',
   institution: 'IIT MADRAS',
-  location: 'MAU, UTTAR PRADESH, INDIA',
-  coordinates: '25.9417° N, 83.5611° E (MAU, IN) • GMT +05:30 IST',
+  location: 'UTTAR PRADESH, INDIA',
   copyright: '© 2026 SAURABH. ALL RIGHTS RESERVED.',
   availability: 'AVAILABLE FOR WORK',
 };
@@ -32,7 +31,7 @@ export const NAVIGATION_ITEMS: NavItem[] = [
   },
   { id: 'experience', label: 'EXPERIENCE', href: '#experience' },
   { id: 'about', label: 'ABOUT', href: '#about' },
-  { id: 'contact', label: 'CONTACT', href: '#contact' },
+  { id: 'contact', label: 'CONTACT', href: 'contact' },
 ];
 
 export const COLOR_TOKENS: ColorToken[] = [
