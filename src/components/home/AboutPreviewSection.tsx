@@ -1,9 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { ArrowRight, GraduationCap, MapPin, Sparkles } from 'lucide-react';
-import portraitImg from '../../assets/images/saurabh_portrait_1788625229418.jpg';
 import { IDENTITY } from '../../design-system/tokens';
 import { getAboutData, getSiteSettings } from '../../services/portfolioDataService';
-import { AdminAboutData } from '../../types/admin';
+import { AdminAboutData, AdminSiteSettings } from '../../types/admin';
 
 interface AboutPreviewSectionProps {
   onMoreAboutClick?: () => void;
@@ -11,8 +10,11 @@ interface AboutPreviewSectionProps {
 
 export const AboutPreviewSection: React.FC<AboutPreviewSectionProps> = ({ onMoreAboutClick }) => {
   const [about, setAbout] = useState<AdminAboutData | null>(null);
+  const [settings, setSettings] = useState<AdminSiteSettings | null>(null);
   const [location, setLocation] = useState<string>('MAU, UP, INDIA');
   const [availability, setAvailability] = useState<string>(IDENTITY.availability);
+  const [isLoading, setIsLoading] = useState<boolean>(true);
+  const [imageHasFailed, setImageHasFailed] = useState<boolean>(false);
 
   useEffect(() => {
     let isMounted = true;
@@ -21,11 +23,17 @@ export const AboutPreviewSection: React.FC<AboutPreviewSectionProps> = ({ onMore
         const [a, s] = await Promise.all([getAboutData(), getSiteSettings()]);
         if (isMounted) {
           if (a) setAbout(a);
+          if (s) setSettings(s);
           if (s?.contactDetails?.location) setLocation(s.contactDetails.location);
           if (s?.availability?.status) setAvailability(s.availability.status);
+          setImageHasFailed(false);
+          setIsLoading(false);
         }
       } catch (err) {
         console.warn('AboutPreviewSection load error:', err);
+        if (isMounted) {
+          setIsLoading(false);
+        }
       }
     };
 
@@ -42,7 +50,11 @@ export const AboutPreviewSection: React.FC<AboutPreviewSectionProps> = ({ onMore
     };
   }, []);
 
-  const profileImg = about?.profileImage || portraitImg;
+  const profileImg =
+    about?.profileImage?.trim() ||
+    settings?.home?.profileImage?.trim() ||
+    (settings as any)?.homeContent?.profileImage?.trim() ||
+    '';
   const quoteTitle = about?.name || 'Saurabh';
   const roleText = about?.tagline || 'Video Editor, Graphic Designer and Web Developer';
   const institution = about?.education?.institution || 'IIT Madras';
@@ -82,12 +94,21 @@ export const AboutPreviewSection: React.FC<AboutPreviewSectionProps> = ({ onMore
           <div className="lg:col-span-5 relative">
             <div className="relative bg-[#080808] border border-[#22252A] rounded-[8px] p-3 overflow-hidden group">
               <div className="relative aspect-[3/4] overflow-hidden rounded-[4px] bg-[#0D0D0D]">
-                <img
-                  src={profileImg}
-                  alt={`${quoteTitle} — Portrait`}
-                  referrerPolicy="no-referrer"
-                  className="w-full h-full object-cover object-top filter contrast-[1.05] brightness-95 transition-transform duration-700 ease-out group-hover:scale-105"
-                />
+                {isLoading ? (
+                  <div className="w-full h-full bg-[#0D0D0D] flex items-center justify-center">
+                    <div className="w-8 h-8 rounded-full border border-[#22252A] border-t-[#8FB8E8]/40 animate-spin" />
+                  </div>
+                ) : profileImg && !imageHasFailed ? (
+                  <img
+                    src={profileImg}
+                    alt={`${quoteTitle} — Portrait`}
+                    referrerPolicy="no-referrer"
+                    onError={() => setImageHasFailed(true)}
+                    className="w-full h-full object-cover object-top filter contrast-[1.05] brightness-95 transition-transform duration-700 ease-out group-hover:scale-105"
+                  />
+                ) : (
+                  <div className="w-full h-full bg-[#0D0D0D]" />
+                )}
                 
                 {/* Viewfinder corner lines */}
                 <div className="absolute top-3 left-3 w-4 h-4 border-t-2 border-l-2 border-[#8FB8E8]/60 pointer-events-none" />

@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react';
 import { Award, CheckCircle2, GraduationCap, MapPin, Sparkles } from 'lucide-react';
-import portraitImg from '../../assets/images/saurabh_portrait_1788625229418.jpg';
 import { ABOUT_PROFILE } from '../../data/aboutData';
 import { getAboutData, getSiteSettings } from '../../services/portfolioDataService';
 import { AdminAboutData, AdminSiteSettings } from '../../types/admin';
@@ -8,6 +7,8 @@ import { AdminAboutData, AdminSiteSettings } from '../../types/admin';
 export const AboutMainSection: React.FC = () => {
   const [about, setAbout] = useState<AdminAboutData | null>(null);
   const [settings, setSettings] = useState<AdminSiteSettings | null>(null);
+  const [isLoading, setIsLoading] = useState<boolean>(true);
+  const [imageHasFailed, setImageHasFailed] = useState<boolean>(false);
 
   useEffect(() => {
     let isMounted = true;
@@ -17,9 +18,14 @@ export const AboutMainSection: React.FC = () => {
         if (isMounted) {
           if (a) setAbout(a);
           if (s) setSettings(s);
+          setImageHasFailed(false);
+          setIsLoading(false);
         }
       } catch (err) {
         console.warn('AboutMainSection load error:', err);
+        if (isMounted) {
+          setIsLoading(false);
+        }
       }
     };
 
@@ -36,7 +42,12 @@ export const AboutMainSection: React.FC = () => {
     };
   }, []);
 
-  const imageSrc = about?.profileImage || portraitImg;
+  const imageSrc =
+    about?.profileImage?.trim() ||
+    settings?.about?.profileImage?.trim() ||
+    settings?.home?.profileImage?.trim() ||
+    (settings as any)?.homeContent?.profileImage?.trim() ||
+    '';
   const name = settings?.siteName || 'Saurabh';
   const location = settings?.contactDetails?.location || about?.location || ABOUT_PROFILE.location;
   const city = location.split(',')[0] || 'Mau';
@@ -74,12 +85,21 @@ export const AboutMainSection: React.FC = () => {
 
             {/* Portrait Container */}
             <div className="relative aspect-[4/5] sm:aspect-[3/4] overflow-hidden rounded-[4px] bg-[#0D0D0D]">
-              <img
-                src={imageSrc}
-                alt={`${name} — Video Editor, Graphic Designer & Web Developer`}
-                referrerPolicy="no-referrer"
-                className="w-full h-full object-cover object-top filter contrast-[1.05] brightness-95 transition-transform duration-700 ease-out group-hover:scale-105"
-              />
+              {isLoading ? (
+                <div className="w-full h-full bg-[#0D0D0D] flex items-center justify-center">
+                  <div className="w-8 h-8 rounded-full border border-[#22252A] border-t-[#8FB8E8]/40 animate-spin" />
+                </div>
+              ) : imageSrc && !imageHasFailed ? (
+                <img
+                  src={imageSrc}
+                  alt={`${name} — Video Editor, Graphic Designer & Web Developer`}
+                  referrerPolicy="no-referrer"
+                  onError={() => setImageHasFailed(true)}
+                  className="w-full h-full object-cover object-top filter contrast-[1.05] brightness-95 transition-transform duration-700 ease-out group-hover:scale-105"
+                />
+              ) : (
+                <div className="w-full h-full bg-[#0D0D0D]" />
+              )}
 
               {/* Viewfinder corner brackets */}
               <div className="absolute top-3 left-3 w-4 h-4 border-t-2 border-l-2 border-[#8FB8E8]/60 pointer-events-none" />

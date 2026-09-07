@@ -19,6 +19,7 @@ export interface AboutProfileData {
   personalEmail: string;
   workEmail: string;
   happicoreUrl: string;
+  profileImage?: string;
 }
 
 export const ABOUT_PROFILE: AboutProfileData = {

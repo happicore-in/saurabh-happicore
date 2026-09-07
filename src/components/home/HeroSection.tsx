@@ -1,9 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { ArrowRight, ArrowUpRight, Compass, MapPin } from 'lucide-react';
 import { IDENTITY } from '../../design-system/tokens';
-import portraitImg from '../../assets/images/saurabh_portrait_1788625229418.jpg';
-import { getSiteSettings } from '../../services/portfolioDataService';
-import { AdminSiteSettings } from '../../types/admin';
+import { getSiteSettings, getAboutData } from '../../services/portfolioDataService';
+import { AdminSiteSettings, AdminAboutData } from '../../types/admin';
 
 interface HeroSectionProps {
   onExploreWork?: () => void;
@@ -15,24 +14,35 @@ export const HeroSection: React.FC<HeroSectionProps> = ({
   onContactClick,
 }) => {
   const [settings, setSettings] = useState<AdminSiteSettings | null>(null);
+  const [about, setAbout] = useState<AdminAboutData | null>(null);
+  const [isLoading, setIsLoading] = useState<boolean>(true);
+  const [imageHasFailed, setImageHasFailed] = useState<boolean>(false);
 
   useEffect(() => {
     let isMounted = true;
-    const loadSettings = async () => {
+    const loadData = async () => {
       try {
-        const s = await getSiteSettings();
-        if (isMounted) setSettings(s);
+        const [s, a] = await Promise.all([getSiteSettings(), getAboutData()]);
+        if (isMounted) {
+          setSettings(s);
+          setAbout(a);
+          setImageHasFailed(false);
+          setIsLoading(false);
+        }
       } catch (err) {
-        console.warn('HeroSection settings load error:', err);
+        console.warn('HeroSection data load error:', err);
+        if (isMounted) {
+          setIsLoading(false);
+        }
       }
     };
 
-    loadSettings();
+    loadData();
 
     const handleUpdate = (e: Event) => {
       const detail = (e as CustomEvent).detail;
-      if (!detail || detail.type === 'settings') {
-        loadSettings();
+      if (!detail || detail.type === 'settings' || detail.type === 'about') {
+        loadData();
       }
     };
 
@@ -57,9 +67,10 @@ export const HeroSection: React.FC<HeroSectionProps> = ({
     'MAU, UP, INDIA';
 
   const profileImageUrl =
-    settings?.home?.profileImage ||
-    (settings as any)?.homeContent?.profileImage ||
-    portraitImg;
+    settings?.home?.profileImage?.trim() ||
+    (settings as any)?.homeContent?.profileImage?.trim() ||
+    about?.profileImage?.trim() ||
+    '';
 
   const siteDisplayName =
     settings?.siteName ? settings.siteName.split('//')[0].trim() : 'SAURABH';
@@ -152,13 +163,24 @@ export const HeroSection: React.FC<HeroSectionProps> = ({
             </div>
 
             {/* Seamless Portrait Container - NO CARDS, NO BROWSER FRAMES, PURE INTEGRATION */}
-            <div className="relative w-[280px] sm:w-[340px] md:w-[380px] lg:w-[410px] aspect-[3/4] mx-auto select-none">
-              <img
-                src={profileImageUrl}
-                alt="Saurabh — Video Editor, Graphic Designer, Web Developer"
-                referrerPolicy="no-referrer"
-                className="w-full h-full object-cover object-top filter contrast-[1.05] brightness-[0.98]"
-              />
+            <div className="relative w-[280px] sm:w-[340px] md:w-[380px] lg:w-[410px] aspect-[3/4] mx-auto select-none bg-[#000000]">
+              {isLoading ? (
+                /* Neutral loading state / pure black area matching background */
+                <div className="w-full h-full bg-[#050608] flex items-center justify-center">
+                  <div className="w-8 h-8 rounded-full border border-[#22252A] border-t-[#8FB8E8]/40 animate-spin" />
+                </div>
+              ) : profileImageUrl && !imageHasFailed ? (
+                <img
+                  src={profileImageUrl}
+                  alt="Saurabh — Video Editor, Graphic Designer, Web Developer"
+                  referrerPolicy="no-referrer"
+                  onError={() => setImageHasFailed(true)}
+                  className="w-full h-full object-cover object-top filter contrast-[1.05] brightness-[0.98]"
+                />
+              ) : (
+                /* Pure black empty state if image is null/empty/failed */
+                <div className="w-full h-full bg-[#000000]" />
+              )}
 
               {/* Seamless gradient mask at the bottom dissolving the torso into pure black */}
               <div
