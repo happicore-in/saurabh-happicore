@@ -65,7 +65,7 @@ export const WebHero: React.FC<WebHeroProps> = ({
         <div className="lg:col-span-4 flex items-center justify-start lg:justify-end gap-3">
           <div className="px-4 py-3 bg-[#080808] border border-[#22252A] rounded-[6px] min-w-[120px]">
             <div className="font-heading font-bold text-2xl text-[#8FB8E8]">
-              85+
+              1
             </div>
             <div className="font-mono text-[9px] uppercase tracking-wider text-[#6F7682]">
               LIVE DEPLOYMENTS
