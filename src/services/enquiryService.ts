@@ -13,9 +13,14 @@ export interface ProjectEnquiry {
   status: 'NEW' | 'CONTACTED' | 'IN_PROGRESS' | 'COMPLETED' | 'ARCHIVED';
 }
 
-const STORAGE_KEY = 'saurabh_portfolio_enquiries';
+// Runtime-only in-memory cache (disappears when page or browser tab is closed)
+let memoryEnquiriesCache: ProjectEnquiry[] | null = null;
 
-async function withFirestoreTimeout<T>(promise: Promise<T>, ms = 3000): Promise<T> {
+export function clearEnquiryMemoryCache(): void {
+  memoryEnquiriesCache = null;
+}
+
+async function withFirestoreTimeout<T>(promise: Promise<T>, ms = 6000): Promise<T> {
   let timer: any;
   const timeoutPromise = new Promise<never>((_, reject) => {
     timer = setTimeout(() => {
@@ -49,29 +54,25 @@ export async function submitProjectEnquiry(
 
   let firestoreId = generatedId;
 
-  // Try submitting to Firestore with timeout
+  // Authoritative write to Firestore
   try {
-    const docRef = await withFirestoreTimeout(addDoc(collection(db, 'contactEnquiries'), payload), 4000);
+    const docRef = await withFirestoreTimeout(addDoc(collection(db, 'contactEnquiries'), payload), 6000);
     firestoreId = docRef.id;
   } catch (err) {
-    console.warn('Firestore write warning (falling back to local cache):', err);
+    console.warn('Firestore enquiry write notice:', err);
   }
 
-  // Also cache locally for immediate offline/hybrid access
-  try {
-    const localEnquiry: ProjectEnquiry = {
-      ...payload,
-      id: firestoreId,
-    };
-    const existing = localStorage.getItem(STORAGE_KEY);
-    const list: ProjectEnquiry[] = existing ? JSON.parse(existing) : [];
-    list.unshift(localEnquiry);
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(list));
+  const newEnquiryItem: ProjectEnquiry = {
+    ...payload,
+    id: firestoreId,
+  };
 
-    window.dispatchEvent(new CustomEvent('portfolio_enquiry_received', { detail: localEnquiry }));
-  } catch (err) {
-    console.warn('Local storage write warning:', err);
+  // Update in-memory runtime cache only
+  if (memoryEnquiriesCache !== null) {
+    memoryEnquiriesCache = [newEnquiryItem, ...memoryEnquiriesCache];
   }
+
+  window.dispatchEvent(new CustomEvent('portfolio_enquiry_received', { detail: newEnquiryItem }));
 
   return {
     success: true,
@@ -80,41 +81,36 @@ export async function submitProjectEnquiry(
   };
 }
 
-export async function fetchAllEnquiries(): Promise<ProjectEnquiry[]> {
-  try {
-    const q = query(collection(db, 'contactEnquiries'), orderBy('createdAt', 'desc'));
-    const snapshot = await withFirestoreTimeout(getDocs(q), 3000);
-    if (!snapshot.empty) {
-      const items: ProjectEnquiry[] = [];
-      snapshot.forEach((docSnap) => {
-        const d = docSnap.data();
-        items.push({
-          id: docSnap.id,
-          name: d.name || '',
-          email: d.email || '',
-          projectType: d.projectType || '',
-          timeline: d.timeline || '',
-          budget: d.budget || '',
-          projectDetails: d.projectDetails || '',
-          referenceLink: d.referenceLink || '',
-          createdAt: d.createdAt || new Date().toISOString(),
-          status: d.status || 'NEW',
-        });
-      });
-      // Synchronize local cache
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(items));
-      return items;
-    }
-  } catch (err) {
-    console.warn('Could not read from Firestore, reading from local cache:', err);
+export async function fetchAllEnquiries(forceRefresh = false): Promise<ProjectEnquiry[]> {
+  if (!forceRefresh && memoryEnquiriesCache !== null) {
+    return memoryEnquiriesCache;
   }
 
-  // Fallback to local cache
   try {
-    const existing = localStorage.getItem(STORAGE_KEY);
-    return existing ? JSON.parse(existing) : [];
-  } catch {
-    return [];
+    const q = query(collection(db, 'contactEnquiries'), orderBy('createdAt', 'desc'));
+    const snapshot = await withFirestoreTimeout(getDocs(q), 6000);
+    const items: ProjectEnquiry[] = [];
+    snapshot.forEach((docSnap) => {
+      const d = docSnap.data();
+      items.push({
+        id: docSnap.id,
+        name: d.name || '',
+        email: d.email || '',
+        projectType: d.projectType || '',
+        timeline: d.timeline || '',
+        budget: d.budget || '',
+        projectDetails: d.projectDetails || '',
+        referenceLink: d.referenceLink || '',
+        createdAt: d.createdAt || new Date().toISOString(),
+        status: d.status || 'NEW',
+      });
+    });
+
+    memoryEnquiriesCache = items;
+    return items;
+  } catch (err) {
+    console.warn('Firestore enquiry read notice:', err);
+    return memoryEnquiriesCache || [];
   }
 }
 
@@ -124,56 +120,32 @@ export async function updateEnquiryStatus(
   enquiryId: string,
   newStatus: ProjectEnquiry['status']
 ): Promise<boolean> {
-  try {
-    await updateDoc(doc(db, 'contactEnquiries', enquiryId), {
-      status: newStatus,
-      updatedAt: new Date().toISOString(),
-    });
-  } catch (err) {
-    console.warn('Firestore status update fallback to local:', err);
-  }
+  // Authoritative Firestore update
+  await updateDoc(doc(db, 'contactEnquiries', enquiryId), {
+    status: newStatus,
+    updatedAt: new Date().toISOString(),
+  });
 
-  // Update local cache
-  try {
-    const existing = localStorage.getItem(STORAGE_KEY);
-    if (existing) {
-      const list: ProjectEnquiry[] = JSON.parse(existing);
-      const updated = list.map((item) =>
-        item.id === enquiryId ? { ...item, status: newStatus } : item
-      );
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(updated));
-    }
-    return true;
-  } catch {
-    return false;
+  // Update in-memory runtime cache
+  if (memoryEnquiriesCache !== null) {
+    memoryEnquiriesCache = memoryEnquiriesCache.map((item) =>
+      item.id === enquiryId ? { ...item, status: newStatus } : item
+    );
   }
+  return true;
 }
 
 export async function deleteEnquiry(enquiryId: string): Promise<boolean> {
-  try {
-    await deleteDoc(doc(db, 'contactEnquiries', enquiryId));
-  } catch (err) {
-    console.warn('Firestore delete fallback to local:', err);
-  }
+  // Authoritative Firestore delete
+  await deleteDoc(doc(db, 'contactEnquiries', enquiryId));
 
-  try {
-    const existing = localStorage.getItem(STORAGE_KEY);
-    if (existing) {
-      const list: ProjectEnquiry[] = JSON.parse(existing);
-      const filtered = list.filter((item) => item.id !== enquiryId);
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(filtered));
-    }
-    return true;
-  } catch {
-    return false;
+  // Update in-memory runtime cache
+  if (memoryEnquiriesCache !== null) {
+    memoryEnquiriesCache = memoryEnquiriesCache.filter((item) => item.id !== enquiryId);
   }
+  return true;
 }
 
 export function getStoredEnquiries(): ProjectEnquiry[] {
-  try {
-    const existing = localStorage.getItem(STORAGE_KEY);
-    return existing ? JSON.parse(existing) : [];
-  } catch {
-    return [];
-  }
+  return memoryEnquiriesCache || [];
 }

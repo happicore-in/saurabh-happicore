@@ -12,11 +12,11 @@ interface SelectedWorkSectionProps {
 
 const DEFAULT_FEATURED: PublicHomeFeaturedItem[] = [
   {
-    id: 'paradox-2024',
+    id: 'paradox-2026-aftermovie',
     type: 'video',
-    title: 'Paradox 2024 Aftermovie',
+    title: 'Paradox 2026 Aftermovie',
     categoryLabel: 'VIDEO / FESTIVAL AFTERMOVIE',
-    year: '2024',
+    year: '2026',
     image: paradoxImg,
     description:
       'Official energetic festival aftermovie capturing raw crowd euphoria, stage pyrotechnics, and live musical momentum with rhythmic cutting and deep color grading.',
@@ -91,7 +91,7 @@ export const SelectedWorkSection: React.FC<SelectedWorkSectionProps> = ({
       try {
         const list = await getPublicHomeFeaturedProjects();
         if (isMounted) {
-          setProjects(list && list.length > 0 ? list : DEFAULT_FEATURED);
+          setProjects(list || []);
           if (!silent) {
             setIsLoading(false);
           }
@@ -99,7 +99,7 @@ export const SelectedWorkSection: React.FC<SelectedWorkSectionProps> = ({
       } catch (err) {
         console.warn('SelectedWorkSection load notice:', err);
         if (isMounted && !silent) {
-          setProjects(DEFAULT_FEATURED);
+          setProjects([]);
           setIsLoading(false);
         }
       }

@@ -43,14 +43,7 @@ export const VideoPage: React.FC<VideoPageProps> = ({
       try {
         const res = await getPublicVideoProjects();
         if (isMounted) {
-          if (res && res.featured) {
-            setVideoData(res);
-          } else {
-            setVideoData({
-              featured: FEATURED_VIDEO_PROJECT,
-              selected: SELECTED_VIDEO_PROJECTS,
-            });
-          }
+          setVideoData(res || { featured: null, selected: [] });
           if (!silent) {
             setIsLoading(false);
           }
@@ -58,10 +51,7 @@ export const VideoPage: React.FC<VideoPageProps> = ({
       } catch (err) {
         console.warn('VideoPage load notice:', err);
         if (isMounted && !silent) {
-          setVideoData({
-            featured: FEATURED_VIDEO_PROJECT,
-            selected: SELECTED_VIDEO_PROJECTS,
-          });
+          setVideoData({ featured: null, selected: [] });
           setIsLoading(false);
         }
       }

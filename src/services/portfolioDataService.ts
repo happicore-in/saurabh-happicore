@@ -4,8 +4,6 @@ import {
   getDocs,
   getDoc,
   setDoc,
-  addDoc,
-  updateDoc,
   deleteDoc,
   doc,
 } from '../lib/firebase';
@@ -28,8 +26,12 @@ import {
   GraphicProjectItem,
   ExperienceItem,
 } from '../types';
+import { deleteCloudinaryAsset, setMemoryCloudinaryConfig } from './cloudinaryService';
 
-// Initial baseline web projects mapped to AdminWebProject
+// ========================================================
+// Baseline Static Fallback Constants
+// (Used ONLY for explicit database seeding or emergency offline zero-cache fallback)
+// ========================================================
 export const BASELINE_WEB_PROJECTS: AdminWebProject[] = [
   {
     id: FLAGSHIP_WEB_PROJECT.id,
@@ -59,7 +61,6 @@ export const BASELINE_WEB_PROJECTS: AdminWebProject[] = [
   })),
 ];
 
-// Initial baseline video projects mapped to AdminVideoProject
 export const BASELINE_VIDEO_PROJECTS: AdminVideoProject[] = [
   {
     id: FEATURED_VIDEO_PROJECT.id,
@@ -93,7 +94,6 @@ export const BASELINE_VIDEO_PROJECTS: AdminVideoProject[] = [
   })),
 ];
 
-// Initial baseline graphic projects mapped to AdminGraphicProject
 export const BASELINE_GRAPHIC_PROJECTS: AdminGraphicProject[] = [
   {
     id: FEATURED_GRAPHIC_PROJECT.id,
@@ -123,7 +123,6 @@ export const BASELINE_GRAPHIC_PROJECTS: AdminGraphicProject[] = [
   })),
 ];
 
-// Initial baseline experience mapped to AdminExperience
 export const BASELINE_EXPERIENCES: AdminExperience[] = EXPERIENCE_ITEMS.map((e, idx) => ({
   id: e.id,
   role: e.role,
@@ -139,7 +138,38 @@ export const BASELINE_EXPERIENCES: AdminExperience[] = EXPERIENCE_ITEMS.map((e, 
   order: idx + 1,
 }));
 
-// Baseline site settings
+export const BASELINE_ABOUT_DATA: AdminAboutData = {
+  profileImage: '',
+  shortIntro: ABOUT_PROFILE.bioHeading,
+  aboutDescription: `${ABOUT_PROFILE.bioParagraph1}\n\n${ABOUT_PROFILE.bioParagraph2}`,
+  focusAreas: [...ABOUT_PROFILE.education.focusAreas],
+  location: ABOUT_PROFILE.location,
+  availabilityStatus: 'AVAILABLE FOR WORK',
+  education: {
+    institution: ABOUT_PROFILE.education.institution,
+    degree: ABOUT_PROFILE.education.degree,
+    status: ABOUT_PROFILE.education.status,
+    details: ABOUT_PROFILE.education.details,
+  },
+  tools: [
+    { name: 'CapCut PC', category: 'video' },
+    { name: 'Premiere Pro', category: 'video' },
+    { name: 'After Effects', category: 'video' },
+    { name: 'Photoshop', category: 'design' },
+    { name: 'Illustrator', category: 'design' },
+    { name: 'Canva', category: 'design' },
+    { name: 'React / Vite', category: 'web' },
+    { name: 'Tailwind CSS', category: 'web' },
+    { name: 'TypeScript', category: 'web' },
+    { name: 'HTML5 / Modern JS', category: 'web' },
+  ],
+  services: WHAT_I_DO_ITEMS.map((item) => ({
+    title: item.title,
+    badge: item.category.toUpperCase(),
+    description: item.skills.join(' • '),
+  })),
+};
+
 export const BASELINE_SITE_SETTINGS: AdminSiteSettings = {
   id: 'global',
   siteName: 'SAURABH // CREATIVE MULTIDISCIPLINARY',
@@ -238,17 +268,38 @@ export const BASELINE_SITE_SETTINGS: AdminSiteSettings = {
   },
 };
 
-// Keys for local storage caching
-const STORAGE_KEYS = {
-  WEB: 'saurabh_admin_web_projects',
-  VIDEO: 'saurabh_admin_video_projects',
-  GRAPHIC: 'saurabh_admin_graphic_projects',
-  EXPERIENCE: 'saurabh_admin_experiences',
-  SETTINGS: 'saurabh_admin_settings',
-  ABOUT: 'saurabh_portfolio_about',
-};
+// ========================================================
+// Storage Sanitization (Purge legacy portfolio localStorage)
+// Ensures ZERO portfolio data remains in localStorage.
+// ========================================================
+function purgeLegacyPortfolioLocalStorage(): void {
+  if (typeof window === 'undefined') return;
+  try {
+    const keysToRemove = [
+      'saurabh_portfolio_cache_version',
+      'saurabh_portfolio_cache_v2_web',
+      'saurabh_portfolio_cache_v2_video',
+      'saurabh_portfolio_cache_v2_graphic',
+      'saurabh_portfolio_cache_v2_experience',
+      'saurabh_portfolio_cache_v2_settings',
+      'saurabh_portfolio_cache_v2_about',
+      'saurabh_admin_web_projects',
+      'saurabh_admin_video_projects',
+      'saurabh_admin_graphic_projects',
+      'saurabh_admin_experiences',
+      'saurabh_admin_settings',
+      'saurabh_portfolio_about',
+      'saurabh_portfolio_enquiries',
+    ];
+    keysToRemove.forEach((key) => localStorage.removeItem(key));
+  } catch {
+    // ignore
+  }
+}
 
-// In-memory cache for instant subsequent reads and cross-component sharing
+purgeLegacyPortfolioLocalStorage();
+
+// In-memory cache store (Runtime-only; disappears when browser page/tab is closed)
 interface MemoryCacheStore {
   web?: AdminWebProject[];
   video?: AdminVideoProject[];
@@ -265,7 +316,9 @@ const inFlightPromises: { [key: string]: Promise<any> | undefined } = {};
 /**
  * Invalidate in-memory cache when data changes or force-refresh is requested.
  */
-export function invalidatePortfolioDataCache(type?: 'web' | 'video' | 'graphic' | 'experience' | 'about' | 'settings' | 'all') {
+export function invalidatePortfolioDataCache(
+  type?: 'web' | 'video' | 'graphic' | 'experience' | 'about' | 'settings' | 'all'
+) {
   if (!type || type === 'all') {
     delete memoryCache.web;
     delete memoryCache.video;
@@ -293,8 +346,8 @@ export function invalidatePortfolioDataCache(type?: 'web' | 'video' | 'graphic' 
   }
 }
 
-// Resilient promise timeout to prevent hanging when offline or experiencing intermittent connectivity
-async function withFirestoreTimeout<T>(promise: Promise<T>, ms = 3000): Promise<T> {
+// Resilient promise timeout to prevent hanging when offline or experiencing network delay
+async function withFirestoreTimeout<T>(promise: Promise<T>, ms = 7000): Promise<T> {
   let timer: any;
   const timeoutPromise = new Promise<never>((_, reject) => {
     timer = setTimeout(() => {
@@ -308,9 +361,12 @@ async function withFirestoreTimeout<T>(promise: Promise<T>, ms = 3000): Promise<
   }
 }
 
-// Web Projects API
+// ========================================================
+// 1. Web Projects API
+// ========================================================
 export async function getWebProjects(forceRefresh = false): Promise<AdminWebProject[]> {
-  if (!forceRefresh && memoryCache.web && memoryCache.web.length > 0) {
+  // 1. Fast memory cache return if already populated and not force-refreshing
+  if (!forceRefresh && memoryCache.web !== undefined) {
     return memoryCache.web;
   }
 
@@ -320,31 +376,20 @@ export async function getWebProjects(forceRefresh = false): Promise<AdminWebProj
 
   const promise = (async () => {
     try {
-      const snap = await withFirestoreTimeout(getDocs(collection(db, 'webProjects')), 3000);
-      if (!snap.empty) {
-        const list: AdminWebProject[] = [];
-        snap.forEach((d) => list.push({ ...d.data(), id: d.id } as AdminWebProject));
-        list.sort((a, b) => (a.order || 0) - (b.order || 0));
-        localStorage.setItem(STORAGE_KEYS.WEB, JSON.stringify(list));
-        memoryCache.web = list;
-        return list;
-      }
-    } catch (err) {
-      console.warn('Firestore fetch web projects notice (using cache/baseline):', err);
-    }
+      // 2. Primary & ONLY persistent source of truth: Firestore database
+      const snap = await withFirestoreTimeout(getDocs(collection(db, 'webProjects')), 7000);
+      const list: AdminWebProject[] = [];
+      snap.forEach((d) => list.push({ ...d.data(), id: d.id } as AdminWebProject));
+      list.sort((a, b) => (a.order || 0) - (b.order || 0));
 
-    const cached = localStorage.getItem(STORAGE_KEYS.WEB);
-    if (cached) {
-      try {
-        const parsed = JSON.parse(cached);
-        memoryCache.web = parsed;
-        return parsed;
-      } catch {
-        // ignore
-      }
+      // Successful Firestore query is authoritative (even if collection is empty [])
+      memoryCache.web = list;
+      return list;
+    } catch (err) {
+      console.warn('Firestore fetch webProjects notice:', err);
+      // Return memory cache if previously populated, otherwise empty list. Never resurrect deleted baseline data!
+      return memoryCache.web || [];
     }
-    memoryCache.web = BASELINE_WEB_PROJECTS;
-    return BASELINE_WEB_PROJECTS;
   })();
 
   inFlightPromises.web = promise;
@@ -366,40 +411,53 @@ export async function saveWebProject(project: AdminWebProject): Promise<AdminWeb
     createdAt: project.createdAt || nowIso,
   };
 
-  try {
-    await setDoc(doc(db, 'webProjects', id), data);
-  } catch (err) {
-    console.warn('Firestore save web project error, updating local cache:', err);
-  }
+  // Authoritative write to Firestore FIRST. If this throws, nothing is mutated.
+  await setDoc(doc(db, 'webProjects', id), data);
 
-  // Update cache
-  invalidatePortfolioDataCache('web');
-  const list = await getWebProjects(true);
-  const updated = isNew ? [...list, data] : list.map((p) => (p.id === id ? data : p));
-  localStorage.setItem(STORAGE_KEYS.WEB, JSON.stringify(updated));
+  // Update in-memory runtime cache only
+  const currentList = memoryCache.web || [];
+  const exists = currentList.some((p) => p.id === id);
+  const updated = exists ? currentList.map((p) => (p.id === id ? data : p)) : [...currentList, data];
+  updated.sort((a, b) => (a.order || 0) - (b.order || 0));
+
   memoryCache.web = updated;
+  delete memoryCache.featuredHome;
+
   window.dispatchEvent(new CustomEvent('portfolio_data_updated', { detail: { type: 'web', item: data } }));
   return data;
 }
 
 export async function deleteWebProject(id: string): Promise<boolean> {
-  try {
-    await deleteDoc(doc(db, 'webProjects', id));
-  } catch (err) {
-    console.warn('Firestore delete error:', err);
+  // 1. Identify associated Cloudinary image asset
+  const currentList = memoryCache.web || [];
+  const project = currentList.find((p) => p.id === id);
+
+  // 2. Safely attempt Cloudinary deletion (failure does not block Firestore)
+  if (project?.image) {
+    try {
+      await deleteCloudinaryAsset(project.image, 'image');
+    } catch (err) {
+      console.warn('[Cloudinary] Notice during web project asset cleanup:', err);
+    }
   }
-  invalidatePortfolioDataCache('web');
-  const list = await getWebProjects(true);
-  const filtered = list.filter((p) => p.id !== id);
-  localStorage.setItem(STORAGE_KEYS.WEB, JSON.stringify(filtered));
+
+  // 3. Authoritative delete from Firestore
+  await deleteDoc(doc(db, 'webProjects', id));
+
+  // 4. Update in-memory runtime cache
+  const filtered = currentList.filter((p) => p.id !== id);
   memoryCache.web = filtered;
+  delete memoryCache.featuredHome;
+
   window.dispatchEvent(new CustomEvent('portfolio_data_updated', { detail: { type: 'web', deletedId: id } }));
   return true;
 }
 
-// Video Projects API
+// ========================================================
+// 2. Video Projects API
+// ========================================================
 export async function getVideoProjects(forceRefresh = false): Promise<AdminVideoProject[]> {
-  if (!forceRefresh && memoryCache.video && memoryCache.video.length > 0) {
+  if (!forceRefresh && memoryCache.video !== undefined) {
     return memoryCache.video;
   }
 
@@ -409,31 +467,17 @@ export async function getVideoProjects(forceRefresh = false): Promise<AdminVideo
 
   const promise = (async () => {
     try {
-      const snap = await withFirestoreTimeout(getDocs(collection(db, 'videoProjects')), 3000);
-      if (!snap.empty) {
-        const list: AdminVideoProject[] = [];
-        snap.forEach((d) => list.push({ ...d.data(), id: d.id } as AdminVideoProject));
-        list.sort((a, b) => (a.order || 0) - (b.order || 0));
-        localStorage.setItem(STORAGE_KEYS.VIDEO, JSON.stringify(list));
-        memoryCache.video = list;
-        return list;
-      }
-    } catch (err) {
-      console.warn('Firestore fetch video projects notice (using cache/baseline):', err);
-    }
+      const snap = await withFirestoreTimeout(getDocs(collection(db, 'videoProjects')), 7000);
+      const list: AdminVideoProject[] = [];
+      snap.forEach((d) => list.push({ ...d.data(), id: d.id } as AdminVideoProject));
+      list.sort((a, b) => (a.order || 0) - (b.order || 0));
 
-    const cached = localStorage.getItem(STORAGE_KEYS.VIDEO);
-    if (cached) {
-      try {
-        const parsed = JSON.parse(cached);
-        memoryCache.video = parsed;
-        return parsed;
-      } catch {
-        // ignore
-      }
+      memoryCache.video = list;
+      return list;
+    } catch (err) {
+      console.warn('Firestore fetch videoProjects notice:', err);
+      return memoryCache.video || [];
     }
-    memoryCache.video = BASELINE_VIDEO_PROJECTS;
-    return BASELINE_VIDEO_PROJECTS;
   })();
 
   inFlightPromises.video = promise;
@@ -455,39 +499,47 @@ export async function saveVideoProject(project: AdminVideoProject): Promise<Admi
     createdAt: project.createdAt || nowIso,
   };
 
-  try {
-    await setDoc(doc(db, 'videoProjects', id), data);
-  } catch (err) {
-    console.warn('Firestore save video project error:', err);
-  }
+  await setDoc(doc(db, 'videoProjects', id), data);
 
-  invalidatePortfolioDataCache('video');
-  const list = await getVideoProjects(true);
-  const updated = isNew ? [...list, data] : list.map((p) => (p.id === id ? data : p));
-  localStorage.setItem(STORAGE_KEYS.VIDEO, JSON.stringify(updated));
+  const currentList = memoryCache.video || [];
+  const exists = currentList.some((p) => p.id === id);
+  const updated = exists ? currentList.map((p) => (p.id === id ? data : p)) : [...currentList, data];
+  updated.sort((a, b) => (a.order || 0) - (b.order || 0));
+
   memoryCache.video = updated;
+  delete memoryCache.featuredHome;
+
   window.dispatchEvent(new CustomEvent('portfolio_data_updated', { detail: { type: 'video', item: data } }));
   return data;
 }
 
 export async function deleteVideoProject(id: string): Promise<boolean> {
-  try {
-    await deleteDoc(doc(db, 'videoProjects', id));
-  } catch (err) {
-    console.warn('Firestore delete error:', err);
+  const currentList = memoryCache.video || [];
+  const project = currentList.find((p) => p.id === id);
+
+  if (project?.thumbnail) {
+    try {
+      await deleteCloudinaryAsset(project.thumbnail, 'image');
+    } catch (err) {
+      console.warn('[Cloudinary] Notice during video project asset cleanup:', err);
+    }
   }
-  invalidatePortfolioDataCache('video');
-  const list = await getVideoProjects(true);
-  const filtered = list.filter((p) => p.id !== id);
-  localStorage.setItem(STORAGE_KEYS.VIDEO, JSON.stringify(filtered));
+
+  await deleteDoc(doc(db, 'videoProjects', id));
+
+  const filtered = currentList.filter((p) => p.id !== id);
   memoryCache.video = filtered;
+  delete memoryCache.featuredHome;
+
   window.dispatchEvent(new CustomEvent('portfolio_data_updated', { detail: { type: 'video', deletedId: id } }));
   return true;
 }
 
-// Graphic Projects API
+// ========================================================
+// 3. Graphic Projects API
+// ========================================================
 export async function getGraphicProjects(forceRefresh = false): Promise<AdminGraphicProject[]> {
-  if (!forceRefresh && memoryCache.graphic && memoryCache.graphic.length > 0) {
+  if (!forceRefresh && memoryCache.graphic !== undefined) {
     return memoryCache.graphic;
   }
 
@@ -497,31 +549,17 @@ export async function getGraphicProjects(forceRefresh = false): Promise<AdminGra
 
   const promise = (async () => {
     try {
-      const snap = await withFirestoreTimeout(getDocs(collection(db, 'graphicProjects')), 3000);
-      if (!snap.empty) {
-        const list: AdminGraphicProject[] = [];
-        snap.forEach((d) => list.push({ ...d.data(), id: d.id } as AdminGraphicProject));
-        list.sort((a, b) => (a.order || 0) - (b.order || 0));
-        localStorage.setItem(STORAGE_KEYS.GRAPHIC, JSON.stringify(list));
-        memoryCache.graphic = list;
-        return list;
-      }
-    } catch (err) {
-      console.warn('Firestore fetch graphic projects notice (using cache/baseline):', err);
-    }
+      const snap = await withFirestoreTimeout(getDocs(collection(db, 'graphicProjects')), 7000);
+      const list: AdminGraphicProject[] = [];
+      snap.forEach((d) => list.push({ ...d.data(), id: d.id } as AdminGraphicProject));
+      list.sort((a, b) => (a.order || 0) - (b.order || 0));
 
-    const cached = localStorage.getItem(STORAGE_KEYS.GRAPHIC);
-    if (cached) {
-      try {
-        const parsed = JSON.parse(cached);
-        memoryCache.graphic = parsed;
-        return parsed;
-      } catch {
-        // ignore
-      }
+      memoryCache.graphic = list;
+      return list;
+    } catch (err) {
+      console.warn('Firestore fetch graphicProjects notice:', err);
+      return memoryCache.graphic || [];
     }
-    memoryCache.graphic = BASELINE_GRAPHIC_PROJECTS;
-    return BASELINE_GRAPHIC_PROJECTS;
   })();
 
   inFlightPromises.graphic = promise;
@@ -543,39 +581,47 @@ export async function saveGraphicProject(project: AdminGraphicProject): Promise<
     createdAt: project.createdAt || nowIso,
   };
 
-  try {
-    await setDoc(doc(db, 'graphicProjects', id), data);
-  } catch (err) {
-    console.warn('Firestore save graphic project error:', err);
-  }
+  await setDoc(doc(db, 'graphicProjects', id), data);
 
-  invalidatePortfolioDataCache('graphic');
-  const list = await getGraphicProjects(true);
-  const updated = isNew ? [...list, data] : list.map((p) => (p.id === id ? data : p));
-  localStorage.setItem(STORAGE_KEYS.GRAPHIC, JSON.stringify(updated));
+  const currentList = memoryCache.graphic || [];
+  const exists = currentList.some((p) => p.id === id);
+  const updated = exists ? currentList.map((p) => (p.id === id ? data : p)) : [...currentList, data];
+  updated.sort((a, b) => (a.order || 0) - (b.order || 0));
+
   memoryCache.graphic = updated;
+  delete memoryCache.featuredHome;
+
   window.dispatchEvent(new CustomEvent('portfolio_data_updated', { detail: { type: 'graphic', item: data } }));
   return data;
 }
 
 export async function deleteGraphicProject(id: string): Promise<boolean> {
-  try {
-    await deleteDoc(doc(db, 'graphicProjects', id));
-  } catch (err) {
-    console.warn('Firestore delete error:', err);
+  const currentList = memoryCache.graphic || [];
+  const project = currentList.find((p) => p.id === id);
+
+  if (project?.image) {
+    try {
+      await deleteCloudinaryAsset(project.image, 'image');
+    } catch (err) {
+      console.warn('[Cloudinary] Notice during graphic project asset cleanup:', err);
+    }
   }
-  invalidatePortfolioDataCache('graphic');
-  const list = await getGraphicProjects(true);
-  const filtered = list.filter((p) => p.id !== id);
-  localStorage.setItem(STORAGE_KEYS.GRAPHIC, JSON.stringify(filtered));
+
+  await deleteDoc(doc(db, 'graphicProjects', id));
+
+  const filtered = currentList.filter((p) => p.id !== id);
   memoryCache.graphic = filtered;
+  delete memoryCache.featuredHome;
+
   window.dispatchEvent(new CustomEvent('portfolio_data_updated', { detail: { type: 'graphic', deletedId: id } }));
   return true;
 }
 
-// Experience API
+// ========================================================
+// 4. Experience API
+// ========================================================
 export async function getExperiences(forceRefresh = false): Promise<AdminExperience[]> {
-  if (!forceRefresh && memoryCache.experience && memoryCache.experience.length > 0) {
+  if (!forceRefresh && memoryCache.experience !== undefined) {
     return memoryCache.experience;
   }
 
@@ -585,31 +631,17 @@ export async function getExperiences(forceRefresh = false): Promise<AdminExperie
 
   const promise = (async () => {
     try {
-      const snap = await withFirestoreTimeout(getDocs(collection(db, 'experiences')), 3000);
-      if (!snap.empty) {
-        const list: AdminExperience[] = [];
-        snap.forEach((d) => list.push({ ...d.data(), id: d.id } as AdminExperience));
-        list.sort((a, b) => (a.order || 0) - (b.order || 0));
-        localStorage.setItem(STORAGE_KEYS.EXPERIENCE, JSON.stringify(list));
-        memoryCache.experience = list;
-        return list;
-      }
-    } catch (err) {
-      console.warn('Firestore fetch experiences notice (using cache/baseline):', err);
-    }
+      const snap = await withFirestoreTimeout(getDocs(collection(db, 'experiences')), 7000);
+      const list: AdminExperience[] = [];
+      snap.forEach((d) => list.push({ ...d.data(), id: d.id } as AdminExperience));
+      list.sort((a, b) => (a.order || 0) - (b.order || 0));
 
-    const cached = localStorage.getItem(STORAGE_KEYS.EXPERIENCE);
-    if (cached) {
-      try {
-        const parsed = JSON.parse(cached);
-        memoryCache.experience = parsed;
-        return parsed;
-      } catch {
-        // ignore
-      }
+      memoryCache.experience = list;
+      return list;
+    } catch (err) {
+      console.warn('Firestore fetch experiences notice:', err);
+      return memoryCache.experience || [];
     }
-    memoryCache.experience = BASELINE_EXPERIENCES;
-    return BASELINE_EXPERIENCES;
   })();
 
   inFlightPromises.experience = promise;
@@ -631,32 +663,27 @@ export async function saveExperience(exp: AdminExperience): Promise<AdminExperie
     createdAt: exp.createdAt || nowIso,
   };
 
-  try {
-    await setDoc(doc(db, 'experiences', id), data);
-  } catch (err) {
-    console.warn('Firestore save experience error:', err);
-  }
+  await setDoc(doc(db, 'experiences', id), data);
 
-  invalidatePortfolioDataCache('experience');
-  const list = await getExperiences(true);
-  const updated = isNew ? [...list, data] : list.map((e) => (e.id === id ? data : e));
-  localStorage.setItem(STORAGE_KEYS.EXPERIENCE, JSON.stringify(updated));
+  const currentList = memoryCache.experience || [];
+  const exists = currentList.some((e) => e.id === id);
+  const updated = exists ? currentList.map((e) => (e.id === id ? data : e)) : [...currentList, data];
+  updated.sort((a, b) => (a.order || 0) - (b.order || 0));
+
   memoryCache.experience = updated;
+
   window.dispatchEvent(new CustomEvent('portfolio_data_updated', { detail: { type: 'experience', item: data } }));
   return data;
 }
 
 export async function deleteExperience(id: string): Promise<boolean> {
-  try {
-    await deleteDoc(doc(db, 'experiences', id));
-  } catch (err) {
-    console.warn('Firestore delete error:', err);
-  }
-  invalidatePortfolioDataCache('experience');
-  const list = await getExperiences(true);
-  const filtered = list.filter((e) => e.id !== id);
-  localStorage.setItem(STORAGE_KEYS.EXPERIENCE, JSON.stringify(filtered));
+  await deleteDoc(doc(db, 'experiences', id));
+
+  const currentList = memoryCache.experience || [];
+  const filtered = currentList.filter((e) => e.id !== id);
+
   memoryCache.experience = filtered;
+
   window.dispatchEvent(new CustomEvent('portfolio_data_updated', { detail: { type: 'experience', deletedId: id } }));
   return true;
 }
@@ -668,55 +695,20 @@ export async function reorderExperiences(items: AdminExperience[]): Promise<Admi
     updatedAt: new Date().toISOString(),
   }));
 
-  try {
-    for (const item of updatedItems) {
-      await setDoc(doc(db, 'experiences', item.id), item);
-    }
-  } catch (err) {
-    console.warn('Firestore reorder experiences error:', err);
+  for (const item of updatedItems) {
+    await setDoc(doc(db, 'experiences', item.id), item);
   }
 
-  invalidatePortfolioDataCache('experience');
-  localStorage.setItem(STORAGE_KEYS.EXPERIENCE, JSON.stringify(updatedItems));
   memoryCache.experience = updatedItems;
   window.dispatchEvent(new CustomEvent('portfolio_data_updated', { detail: { type: 'experience', reordered: true } }));
   return updatedItems;
 }
 
-export const BASELINE_ABOUT_DATA: AdminAboutData = {
-  profileImage: '',
-  shortIntro: ABOUT_PROFILE.bioHeading,
-  aboutDescription: `${ABOUT_PROFILE.bioParagraph1}\n\n${ABOUT_PROFILE.bioParagraph2}`,
-  focusAreas: [...ABOUT_PROFILE.education.focusAreas],
-  location: ABOUT_PROFILE.location,
-  availabilityStatus: 'AVAILABLE FOR WORK',
-  education: {
-    institution: ABOUT_PROFILE.education.institution,
-    degree: ABOUT_PROFILE.education.degree,
-    status: ABOUT_PROFILE.education.status,
-    details: ABOUT_PROFILE.education.details,
-  },
-  tools: [
-    { name: 'CapCut PC', category: 'video' },
-    { name: 'Premiere Pro', category: 'video' },
-    { name: 'After Effects', category: 'video' },
-    { name: 'Photoshop', category: 'design' },
-    { name: 'Illustrator', category: 'design' },
-    { name: 'Canva', category: 'design' },
-    { name: 'React / Vite', category: 'web' },
-    { name: 'Tailwind CSS', category: 'web' },
-    { name: 'TypeScript', category: 'web' },
-    { name: 'HTML5 / Modern JS', category: 'web' },
-  ],
-  services: WHAT_I_DO_ITEMS.map((item) => ({
-    title: item.title,
-    badge: item.category.toUpperCase(),
-    description: item.skills.join(' • '),
-  })),
-};
-
+// ========================================================
+// 5. About Data API
+// ========================================================
 export async function getAboutData(forceRefresh = false): Promise<AdminAboutData> {
-  if (!forceRefresh && memoryCache.about) {
+  if (!forceRefresh && memoryCache.about !== undefined) {
     return memoryCache.about;
   }
 
@@ -726,29 +718,20 @@ export async function getAboutData(forceRefresh = false): Promise<AdminAboutData
 
   const promise = (async () => {
     try {
-      const snap = await withFirestoreTimeout(getDoc(doc(db, 'aboutData', 'main')), 3000);
+      const snap = await withFirestoreTimeout(getDoc(doc(db, 'aboutData', 'main')), 7000);
+      let data: AdminAboutData;
       if (snap.exists()) {
-        const data = snap.data() as AdminAboutData;
-        localStorage.setItem(STORAGE_KEYS.ABOUT, JSON.stringify(data));
-        memoryCache.about = data;
-        return data;
+        data = snap.data() as AdminAboutData;
+      } else {
+        // Document does not exist in Firestore yet: return initial application baseline
+        data = BASELINE_ABOUT_DATA;
       }
+      memoryCache.about = data;
+      return data;
     } catch (err) {
-      console.warn('Firestore fetch about notice (using cache/baseline):', err);
+      console.warn('Firestore fetch aboutData notice:', err);
+      return memoryCache.about || BASELINE_ABOUT_DATA;
     }
-
-    const cached = localStorage.getItem(STORAGE_KEYS.ABOUT);
-    if (cached) {
-      try {
-        const parsed = JSON.parse(cached);
-        memoryCache.about = parsed;
-        return parsed;
-      } catch {
-        // ignore
-      }
-    }
-    memoryCache.about = BASELINE_ABOUT_DATA;
-    return BASELINE_ABOUT_DATA;
   })();
 
   inFlightPromises.about = promise;
@@ -760,22 +743,18 @@ export async function getAboutData(forceRefresh = false): Promise<AdminAboutData
 }
 
 export async function saveAboutData(data: AdminAboutData): Promise<AdminAboutData> {
-  try {
-    await setDoc(doc(db, 'aboutData', 'main'), data);
-  } catch (err) {
-    console.warn('Firestore save about error:', err);
-  }
+  await setDoc(doc(db, 'aboutData', 'main'), data);
 
-  invalidatePortfolioDataCache('about');
-  localStorage.setItem(STORAGE_KEYS.ABOUT, JSON.stringify(data));
   memoryCache.about = data;
   window.dispatchEvent(new CustomEvent('portfolio_data_updated', { detail: { type: 'about', item: data } }));
   return data;
 }
 
-// Site Settings API
+// ========================================================
+// 6. Site Settings API
+// ========================================================
 export async function getSiteSettings(forceRefresh = false): Promise<AdminSiteSettings> {
-  if (!forceRefresh && memoryCache.settings) {
+  if (!forceRefresh && memoryCache.settings !== undefined) {
     return memoryCache.settings;
   }
 
@@ -785,35 +764,25 @@ export async function getSiteSettings(forceRefresh = false): Promise<AdminSiteSe
 
   const promise = (async () => {
     try {
-      const snap = await withFirestoreTimeout(getDoc(doc(db, 'siteSettings', 'global')), 3000);
+      const snap = await withFirestoreTimeout(getDoc(doc(db, 'siteSettings', 'global')), 7000);
+      let data: AdminSiteSettings;
       if (snap.exists()) {
-        const data = snap.data() as AdminSiteSettings;
-        localStorage.setItem(STORAGE_KEYS.SETTINGS, JSON.stringify(data));
-        memoryCache.settings = data;
-        return data;
+        data = snap.data() as AdminSiteSettings;
+        const rawHome = (data as any).homeContent || data.home || BASELINE_SITE_SETTINGS.home;
+        data.home = { ...BASELINE_SITE_SETTINGS.home, ...rawHome };
+        data.homeContent = data.home;
+      } else {
+        data = BASELINE_SITE_SETTINGS;
       }
+      if (data.cloudinary) {
+        setMemoryCloudinaryConfig(data.cloudinary);
+      }
+      memoryCache.settings = data;
+      return data;
     } catch (err) {
-      console.warn('Firestore fetch settings notice (using cache/baseline):', err);
+      console.warn('Firestore fetch siteSettings notice:', err);
+      return memoryCache.settings || BASELINE_SITE_SETTINGS;
     }
-
-    const cached = localStorage.getItem(STORAGE_KEYS.SETTINGS);
-    if (cached) {
-      try {
-        const parsed = JSON.parse(cached);
-        if (parsed.cloudinary?.cloudName === 'dpxq9o7kv' || !parsed.cloudinary?.cloudName) {
-          parsed.cloudinary = {
-            cloudName: 'pegfrsqo',
-            uploadPreset: 'portfolio_upload',
-          };
-        }
-        memoryCache.settings = parsed;
-        return parsed;
-      } catch {
-        // ignore
-      }
-    }
-    memoryCache.settings = BASELINE_SITE_SETTINGS;
-    return BASELINE_SITE_SETTINGS;
   })();
 
   inFlightPromises.settings = promise;
@@ -826,27 +795,31 @@ export async function getSiteSettings(forceRefresh = false): Promise<AdminSiteSe
 
 export async function saveSiteSettings(settings: Partial<AdminSiteSettings>): Promise<AdminSiteSettings> {
   const current = await getSiteSettings();
+  const rawHome = (settings as any).homeContent || settings.home || current.home || BASELINE_SITE_SETTINGS.home;
+  const mergedHome = { ...current.home, ...rawHome };
   const updated: AdminSiteSettings = {
     ...current,
     ...settings,
+    home: mergedHome,
+    homeContent: mergedHome,
     updatedAt: new Date().toISOString(),
   };
 
-  try {
-    await setDoc(doc(db, 'siteSettings', 'global'), updated);
-  } catch (err) {
-    console.warn('Firestore save settings error:', err);
+  await setDoc(doc(db, 'siteSettings', 'global'), updated);
+
+  if (updated.cloudinary) {
+    setMemoryCloudinaryConfig(updated.cloudinary);
   }
 
-  invalidatePortfolioDataCache('settings');
-  localStorage.setItem(STORAGE_KEYS.SETTINGS, JSON.stringify(updated));
   memoryCache.settings = updated;
+  delete memoryCache.featuredHome;
+
   window.dispatchEvent(new CustomEvent('portfolio_data_updated', { detail: { type: 'settings', item: updated } }));
   return updated;
 }
 
 // ========================================================
-// Public Data Reflection Helpers (syncs Admin edits to Public UI)
+// 7. Public Data Reflection Helpers (syncs Admin edits to Public UI)
 // ========================================================
 export async function getPublicWebProjects(): Promise<WebProjectItem[]> {
   const adminProjects = await getWebProjects();
@@ -860,7 +833,7 @@ export async function getPublicWebProjects(): Promise<WebProjectItem[]> {
       : 'fullstack',
     categoryLabel: p.category ? p.category.toUpperCase() : 'WEB DEVELOPMENT',
     description: p.description,
-    image: p.image || FLAGSHIP_WEB_PROJECT.image,
+    image: p.image || '',
     technologies: p.technologies && p.technologies.length > 0 ? p.technologies : ['React', 'Tailwind CSS'],
     liveUrl: p.liveUrl,
     githubUrl: p.githubUrl,
@@ -871,7 +844,7 @@ export async function getPublicWebProjects(): Promise<WebProjectItem[]> {
 }
 
 export async function getPublicVideoProjects(): Promise<{
-  featured: VideoProjectItem;
+  featured: VideoProjectItem | null;
   selected: VideoProjectItem[];
 }> {
   const adminVideos = await getVideoProjects();
@@ -881,7 +854,7 @@ export async function getPublicVideoProjects(): Promise<{
     category: p.category || 'Event Aftermovie',
     duration: p.duration || '02:30',
     description: p.description,
-    thumbnail: p.thumbnail || FEATURED_VIDEO_PROJECT.thumbnail,
+    thumbnail: p.thumbnail || '',
     technologies: p.tools && p.tools.length > 0 ? p.tools : ['CapCut PC', 'Premiere Pro'],
     filterCategory: (p.category === 'aftermovies' || p.category === 'sports' || p.category === 'short-form' || p.category === 'promotional')
       ? p.category
@@ -892,10 +865,14 @@ export async function getPublicVideoProjects(): Promise<{
     socialMediaLink: p.socialMediaLink || 'https://instagram.com',
   }));
 
+  if (converted.length === 0) {
+    return { featured: null, selected: [] };
+  }
+
   const featured = converted.find((v) => {
     const adminMatch = adminVideos.find((a) => a.id === v.id);
     return adminMatch?.featured;
-  }) || converted[0] || FEATURED_VIDEO_PROJECT;
+  }) || converted[0];
 
   const selected = converted.filter((v) => v.id !== featured.id);
 
@@ -903,7 +880,7 @@ export async function getPublicVideoProjects(): Promise<{
 }
 
 export async function getPublicGraphicProjects(): Promise<{
-  featured: GraphicProjectItem;
+  featured: GraphicProjectItem | null;
   selected: GraphicProjectItem[];
 }> {
   const adminGraphics = await getGraphicProjects();
@@ -912,7 +889,7 @@ export async function getPublicGraphicProjects(): Promise<{
     title: p.title,
     category: p.category || 'Posters & Print',
     description: p.description,
-    image: p.image || FEATURED_GRAPHIC_PROJECT.image,
+    image: p.image || '',
     technologies: p.tools && p.tools.length > 0 ? p.tools : ['Photoshop', 'Canva'],
     filterCategory: (p.category === 'posters' || p.category === 'branding' || p.category === 'social' || p.category === 'merchandise')
       ? p.category
@@ -922,10 +899,14 @@ export async function getPublicGraphicProjects(): Promise<{
     externalPostLink: p.socialMediaLink,
   }));
 
+  if (converted.length === 0) {
+    return { featured: null, selected: [] };
+  }
+
   const featured = converted.find((g) => {
     const adminMatch = adminGraphics.find((a) => a.id === g.id);
     return adminMatch?.featured;
-  }) || converted[0] || FEATURED_GRAPHIC_PROJECT;
+  }) || converted[0];
 
   const selected = converted.filter((g) => g.id !== featured.id);
 
@@ -970,6 +951,10 @@ export interface PublicHomeFeaturedItem {
 }
 
 export async function getPublicHomeFeaturedProjects(): Promise<PublicHomeFeaturedItem[]> {
+  if (memoryCache.featuredHome !== undefined) {
+    return memoryCache.featuredHome;
+  }
+
   const [settings, webs, videos, graphics] = await Promise.all([
     getSiteSettings(),
     getWebProjects(),
@@ -977,16 +962,19 @@ export async function getPublicHomeFeaturedProjects(): Promise<PublicHomeFeature
     getGraphicProjects(),
   ]);
 
+  const rawHome = (settings as any).homeContent || settings.home || {};
   const featuredIds: string[] =
+    rawHome.featuredWorkIds ||
+    rawHome.featuredProjectIds ||
     settings.home?.featuredWorkIds ||
     settings.home?.featuredProjectIds ||
     [];
 
   const resolved: PublicHomeFeaturedItem[] = [];
 
+  // Match IDs against currently existing Firestore projects. Skip any deleted or missing IDs!
   if (featuredIds.length > 0) {
     for (const id of featuredIds) {
-      // Check video
       const vid = videos.find((v) => v.id === id);
       if (vid) {
         resolved.push({
@@ -994,7 +982,7 @@ export async function getPublicHomeFeaturedProjects(): Promise<PublicHomeFeature
           type: 'video',
           title: vid.title,
           categoryLabel: vid.category ? `VIDEO / ${vid.category.toUpperCase()}` : 'VIDEO / FESTIVAL AFTERMOVIE',
-          year: vid.year || '2024',
+          year: vid.year || '2026',
           image: vid.thumbnail || 'https://images.unsplash.com/photo-1492684223066-81342ee5ff30?q=80&w=1200&auto=format&fit=crop',
           description: vid.description || 'High-retention cinematic video production with rhythmic pacing and color grading.',
           badgeLabel: vid.aspectRatio === '9:16' ? 'REEL • 9:16' : 'AFTERMOVIE • 4K',
@@ -1009,7 +997,6 @@ export async function getPublicHomeFeaturedProjects(): Promise<PublicHomeFeature
         continue;
       }
 
-      // Check web
       const web = webs.find((w) => w.id === id);
       if (web) {
         resolved.push({
@@ -1017,7 +1004,7 @@ export async function getPublicHomeFeaturedProjects(): Promise<PublicHomeFeature
           type: 'web',
           title: web.title,
           categoryLabel: web.category ? `WEB / ${web.category.toUpperCase()}` : 'WEB / INTERACTIVE',
-          year: web.year || '2024',
+          year: web.year || '2026',
           image: web.image || 'https://images.unsplash.com/photo-1546519638-68e109498ffc?q=80&w=1200&auto=format&fit=crop',
           description: web.description || 'Modern responsive digital presence with bespoke interactions and scalable architecture.',
           badgeLabel: web.badgeLabel || 'WEB INTERFACE',
@@ -1030,7 +1017,6 @@ export async function getPublicHomeFeaturedProjects(): Promise<PublicHomeFeature
         continue;
       }
 
-      // Check graphic
       const grp = graphics.find((g) => g.id === id);
       if (grp) {
         resolved.push({
@@ -1038,7 +1024,7 @@ export async function getPublicHomeFeaturedProjects(): Promise<PublicHomeFeature
           type: 'graphic',
           title: grp.title,
           categoryLabel: grp.category ? `GRAPHIC / ${grp.category.toUpperCase()}` : 'GRAPHIC / POSTERS & PRINT',
-          year: grp.year || '2024',
+          year: grp.year || '2026',
           image: grp.image || 'https://images.unsplash.com/photo-1514525253161-7a46d19cd819?q=80&w=1200&auto=format&fit=crop',
           description: grp.description || 'Deliberate typography and visual hierarchy crafted for print and digital campaigns.',
           badgeLabel: grp.badgeLabel || 'POSTERS & IDENTITY',
@@ -1052,7 +1038,149 @@ export async function getPublicHomeFeaturedProjects(): Promise<PublicHomeFeature
     }
   }
 
+  // If no explicit matches from featured IDs, resolve items marked as featured from live projects
+  if (resolved.length === 0) {
+    const featuredVid = videos.find((v) => v.featured);
+    const featuredWeb = webs.find((w) => w.featured);
+    const featuredGraphic = graphics.find((g) => g.featured);
+
+    if (featuredVid) {
+      resolved.push({
+        id: featuredVid.id,
+        type: 'video',
+        title: featuredVid.title,
+        categoryLabel: featuredVid.category ? `VIDEO / ${featuredVid.category.toUpperCase()}` : 'VIDEO / FESTIVAL AFTERMOVIE',
+        year: featuredVid.year || '2026',
+        image: featuredVid.thumbnail || 'https://images.unsplash.com/photo-1492684223066-81342ee5ff30?q=80&w=1200&auto=format&fit=crop',
+        description: featuredVid.description || 'High-retention cinematic video production with rhythmic pacing and color grading.',
+        badgeLabel: featuredVid.aspectRatio === '9:16' ? 'REEL • 9:16' : 'AFTERMOVIE • 4K',
+        tags: featuredVid.tools && featuredVid.tools.length > 0 ? featuredVid.tools.slice(0, 2) : ['PACING & SOUND DESIGN', 'COLOR GRADING'],
+        role: featuredVid.role || 'DIRECTION & EDIT',
+        aspectRatio: featuredVid.aspectRatio,
+        stats: featuredVid.duration ? `Runtime: ${featuredVid.duration}` : undefined,
+        googleDriveUrl: featuredVid.googleDriveUrl,
+        deliverables: featuredVid.deliverables,
+        tools: featuredVid.tools,
+      });
+    }
+
+    if (featuredWeb) {
+      resolved.push({
+        id: featuredWeb.id,
+        type: 'web',
+        title: featuredWeb.title,
+        categoryLabel: featuredWeb.category ? `WEB / ${featuredWeb.category.toUpperCase()}` : 'WEB / INTERACTIVE',
+        year: featuredWeb.year || '2026',
+        image: featuredWeb.image || 'https://images.unsplash.com/photo-1546519638-68e109498ffc?q=80&w=1200&auto=format&fit=crop',
+        description: featuredWeb.description || 'Modern responsive digital presence with bespoke interactions and scalable architecture.',
+        badgeLabel: featuredWeb.badgeLabel || 'WEB INTERFACE',
+        tags: featuredWeb.technologies && featuredWeb.technologies.length > 0 ? featuredWeb.technologies.slice(0, 2) : ['REACT', 'TAILWIND'],
+        role: webRole(featuredWeb),
+        liveUrl: featuredWeb.liveUrl,
+        deliverables: featuredWeb.deliverables,
+        tools: featuredWeb.technologies,
+      });
+    }
+
+    if (featuredGraphic) {
+      resolved.push({
+        id: featuredGraphic.id,
+        type: 'graphic',
+        title: featuredGraphic.title,
+        categoryLabel: featuredGraphic.category ? `GRAPHIC / ${featuredGraphic.category.toUpperCase()}` : 'GRAPHIC / POSTERS & PRINT',
+        year: featuredGraphic.year || '2026',
+        image: featuredGraphic.image || 'https://images.unsplash.com/photo-1514525253161-7a46d19cd819?q=80&w=1200&auto=format&fit=crop',
+        description: featuredGraphic.description || 'Deliberate typography and visual hierarchy crafted for print and digital campaigns.',
+        badgeLabel: featuredGraphic.badgeLabel || 'POSTERS & IDENTITY',
+        tags: featuredGraphic.tools && featuredGraphic.tools.length > 0 ? featuredGraphic.tools.slice(0, 2) : ['PHOTOSHOP', 'TYPOGRAPHY'],
+        role: featuredGraphic.role || 'CREATIVE DIRECTION',
+        deliverables: featuredGraphic.deliverables,
+        tools: featuredGraphic.tools,
+      });
+    }
+  }
+
+  memoryCache.featuredHome = resolved;
   return resolved;
+}
+
+function webRole(p: AdminWebProject): string {
+  return p.role || 'FULL-STACK DEVELOPMENT';
+}
+
+/**
+ * Ensures Firestore database collections are populated with baseline documents
+ * ONLY when explicitly triggered (e.g. initial setup action).
+ * Never automatically seeds from normal reads.
+ */
+export async function ensureFirestoreDataSeeded(): Promise<{ seeded: boolean; collections: string[] }> {
+  const seededCollections: string[] = [];
+  try {
+    const [webSnap, vidSnap, grpSnap, expSnap, setSnap, abtSnap] = await Promise.all([
+      getDocs(collection(db, 'webProjects')),
+      getDocs(collection(db, 'videoProjects')),
+      getDocs(collection(db, 'graphicProjects')),
+      getDocs(collection(db, 'experiences')),
+      getDoc(doc(db, 'siteSettings', 'global')),
+      getDoc(doc(db, 'aboutData', 'main')),
+    ]);
+
+    const writes: Promise<any>[] = [];
+
+    if (webSnap.empty) {
+      for (const p of BASELINE_WEB_PROJECTS) {
+        writes.push(setDoc(doc(db, 'webProjects', p.id), p));
+      }
+      seededCollections.push('webProjects');
+    }
+
+    if (vidSnap.empty) {
+      for (const p of BASELINE_VIDEO_PROJECTS) {
+        writes.push(setDoc(doc(db, 'videoProjects', p.id), p));
+      }
+      seededCollections.push('videoProjects');
+    }
+
+    if (grpSnap.empty) {
+      for (const p of BASELINE_GRAPHIC_PROJECTS) {
+        writes.push(setDoc(doc(db, 'graphicProjects', p.id), p));
+      }
+      seededCollections.push('graphicProjects');
+    }
+
+    if (expSnap.empty) {
+      for (const p of BASELINE_EXPERIENCES) {
+        writes.push(setDoc(doc(db, 'experiences', p.id), p));
+      }
+      seededCollections.push('experiences');
+    }
+
+    if (!setSnap.exists()) {
+      writes.push(
+        setDoc(doc(db, 'siteSettings', 'global'), {
+          ...BASELINE_SITE_SETTINGS,
+          homeContent: BASELINE_SITE_SETTINGS.home,
+        })
+      );
+      seededCollections.push('siteSettings');
+    }
+
+    if (!abtSnap.exists()) {
+      writes.push(setDoc(doc(db, 'aboutData', 'main'), BASELINE_ABOUT_DATA));
+      seededCollections.push('aboutData');
+    }
+
+    if (writes.length > 0) {
+      await Promise.all(writes);
+      invalidatePortfolioDataCache('all');
+      return { seeded: true, collections: seededCollections };
+    }
+
+    return { seeded: false, collections: [] };
+  } catch (err) {
+    console.error('ensureFirestoreDataSeeded error:', err);
+    throw err;
+  }
 }
 
 export async function getAnyProjectDetails(projectId: string) {

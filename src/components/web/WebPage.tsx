@@ -36,7 +36,7 @@ export const WebPage: React.FC<WebPageProps> = ({
       try {
         const items = await getPublicWebProjects();
         if (isMounted) {
-          setAllWebProjects(items && items.length > 0 ? items : [FLAGSHIP_WEB_PROJECT, ...SELECTED_WEB_PROJECTS]);
+          setAllWebProjects(items || []);
           if (!silent) {
             setIsLoading(false);
           }
@@ -44,7 +44,7 @@ export const WebPage: React.FC<WebPageProps> = ({
       } catch (err) {
         console.warn('WebPage load notice:', err);
         if (isMounted && !silent) {
-          setAllWebProjects([FLAGSHIP_WEB_PROJECT, ...SELECTED_WEB_PROJECTS]);
+          setAllWebProjects([]);
           setIsLoading(false);
         }
       }

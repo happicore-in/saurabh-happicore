@@ -6,7 +6,7 @@ service cloud.firestore {
     // Allows writes for authenticated admins or authorized portfolio administration
     function isAdmin() {
       return request.auth != null
-        && request.auth.uid == "52YS8YuquJNklTh2u0cQ8chVD7g1";
+        && (request.auth.uid == "52YS8YuquJNklTh2u0cQ8chVD7g1" || request.auth.token.email == "happicore.in@gmail.com");
     }
 
     // Public portfolio collections: anyone can view, only authenticated admin can mutate

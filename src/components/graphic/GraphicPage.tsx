@@ -43,14 +43,7 @@ export const GraphicPage: React.FC<GraphicPageProps> = ({
       try {
         const res = await getPublicGraphicProjects();
         if (isMounted) {
-          if (res && res.featured) {
-            setGraphicData(res);
-          } else {
-            setGraphicData({
-              featured: FEATURED_GRAPHIC_PROJECT,
-              selected: SELECTED_GRAPHIC_PROJECTS,
-            });
-          }
+          setGraphicData(res || { featured: null, selected: [] });
           if (!silent) {
             setIsLoading(false);
           }
@@ -58,10 +51,7 @@ export const GraphicPage: React.FC<GraphicPageProps> = ({
       } catch (err) {
         console.warn('GraphicPage load notice:', err);
         if (isMounted && !silent) {
-          setGraphicData({
-            featured: FEATURED_GRAPHIC_PROJECT,
-            selected: SELECTED_GRAPHIC_PROJECTS,
-          });
+          setGraphicData({ featured: null, selected: [] });
           setIsLoading(false);
         }
       }

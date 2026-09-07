@@ -16,6 +16,8 @@ import {
   Clock,
   Sparkles,
   ExternalLink,
+  RefreshCw,
+  Database,
 } from 'lucide-react';
 
 interface DashboardOverviewProps {
@@ -26,6 +28,8 @@ interface DashboardOverviewProps {
   enquiries: ProjectEnquiry[];
   onNavigateTab: (tab: string) => void;
   onSelectEnquiry: (enquiry: ProjectEnquiry) => void;
+  onRefreshData?: () => void;
+  onSeedDatabase?: () => void;
 }
 
 export const DashboardOverview: React.FC<DashboardOverviewProps> = ({
@@ -36,6 +40,8 @@ export const DashboardOverview: React.FC<DashboardOverviewProps> = ({
   enquiries,
   onNavigateTab,
   onSelectEnquiry,
+  onRefreshData,
+  onSeedDatabase,
 }) => {
   const newEnquiriesCount = enquiries.filter((e) => e.status === 'NEW').length;
   const recentEnquiries = enquiries.slice(0, 5);
@@ -109,9 +115,19 @@ export const DashboardOverview: React.FC<DashboardOverviewProps> = ({
           </h1>
         </div>
 
-        <div className="flex items-center gap-3 font-mono text-xs">
-          <span className="text-[#6F7682]">SYNC ENGINE:</span>
-          <span className="text-[#22C55E] bg-[#22C55E]/10 border border-[#22C55E]/20 px-2.5 py-1 rounded">
+        <div className="flex flex-wrap items-center gap-3 font-mono text-xs">
+          {onRefreshData && (
+            <button
+              onClick={onRefreshData}
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-[#22252A] bg-[#0A0C0F] hover:bg-[#12151C] text-[#8FB8E8] transition-colors cursor-pointer"
+              title="Force fetch latest state from Firestore"
+            >
+              <RefreshCw className="w-3.5 h-3.5" />
+              <span>REFRESH DATA</span>
+            </button>
+          )}
+          <span className="text-[#6F7682] hidden sm:inline">SYNC ENGINE:</span>
+          <span className="text-[#22C55E] bg-[#22C55E]/10 border border-[#22C55E]/20 px-2.5 py-1.5 rounded">
             FIREBASE FIRESTORE ONLINE
           </span>
         </div>
@@ -279,6 +295,30 @@ export const DashboardOverview: React.FC<DashboardOverviewProps> = ({
               </button>
             </div>
           </div>
+
+          {onSeedDatabase && (
+            <div className="bg-[#0A0C0F] border border-[#22252A] rounded-xl p-5 space-y-3 font-mono text-xs">
+              <div className="text-[#F2F4F7] flex items-center gap-2 font-bold uppercase">
+                <Database className="w-3.5 h-3.5 text-[#8FB8E8]" />
+                DATABASE CONTROLS
+              </div>
+              <p className="text-[11px] text-[#6F7682] leading-relaxed font-sans">
+                Firestore is the single source of truth. If you want to seed default starter projects into collections that are currently empty, you can initialize them manually.
+              </p>
+              <button
+                type="button"
+                onClick={() => {
+                  if (window.confirm('Populate any currently empty Firestore collections with default starter projects? (Existing collections will not be overwritten)')) {
+                    onSeedDatabase();
+                  }
+                }}
+                className="w-full py-2 px-3 bg-[#11141A] hover:bg-[#181D26] border border-[#8FB8E8]/30 hover:border-[#8FB8E8] text-[#8FB8E8] rounded-lg font-mono text-[11px] font-bold flex items-center justify-center gap-2 transition-colors cursor-pointer"
+              >
+                <Database className="w-3.5 h-3.5" />
+                <span>SEED EMPTY COLLECTIONS</span>
+              </button>
+            </div>
+          )}
 
           <div className="bg-[#080A0E] border border-[#22252A] rounded-xl p-5 space-y-3 font-mono text-xs">
             <div className="text-[#A7ADB7] flex items-center gap-2">

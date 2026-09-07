@@ -16,7 +16,7 @@ export const ExperienceTimeline: React.FC = () => {
       try {
         const list = await getPublicExperiences();
         if (isMounted) {
-          setItems(list && list.length > 0 ? list : EXPERIENCE_ITEMS);
+          setItems(list || []);
           if (!silent) {
             setIsLoading(false);
           }
@@ -24,7 +24,7 @@ export const ExperienceTimeline: React.FC = () => {
       } catch (err) {
         console.warn('ExperienceTimeline load notice:', err);
         if (isMounted && !silent) {
-          setItems(EXPERIENCE_ITEMS);
+          setItems([]);
           setIsLoading(false);
         }
       }

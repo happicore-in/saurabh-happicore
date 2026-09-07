@@ -171,6 +171,7 @@ export interface AdminSiteSettings {
   };
   about: AdminAboutSettings;
   home: AdminHomeContent;
+  homeContent?: AdminHomeContent;
   cloudinary: {
     cloudName: string;
     uploadPreset: string;

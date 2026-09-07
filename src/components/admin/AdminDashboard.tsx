@@ -26,12 +26,15 @@ import {
   saveAboutData,
   getSiteSettings,
   saveSiteSettings,
+  ensureFirestoreDataSeeded,
+  invalidatePortfolioDataCache,
 } from '../../services/portfolioDataService';
 import {
   getEnquiries,
   updateEnquiryStatus,
   deleteEnquiry,
   ProjectEnquiry,
+  clearEnquiryMemoryCache,
 } from '../../services/enquiryService';
 
 // Subcomponents
@@ -101,15 +104,17 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBackToPublic }
   // Load all initial data from portfolioDataService
   const loadAllData = async () => {
     setIsLoading(true);
+    invalidatePortfolioDataCache('all');
+    clearEnquiryMemoryCache();
     try {
       const [webs, vids, graphics, exps, abt, sett, enqs] = await Promise.all([
-        getWebProjects(),
-        getVideoProjects(),
-        getGraphicProjects(),
-        getExperiences(),
-        getAboutData(),
-        getSiteSettings(),
-        getEnquiries(),
+        getWebProjects(true),
+        getVideoProjects(true),
+        getGraphicProjects(true),
+        getExperiences(true),
+        getAboutData(true),
+        getSiteSettings(true),
+        getEnquiries(true),
       ]);
 
       setWebProjects(webs);
@@ -127,81 +132,176 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBackToPublic }
     }
   };
 
+  const handleSeedDatabase = async () => {
+    setIsLoading(true);
+    try {
+      const res = await ensureFirestoreDataSeeded();
+      if (res.seeded) {
+        showToast(`Baseline seeded into: ${res.collections.join(', ')}`, 'success');
+      } else {
+        showToast('All Firestore collections already contain documents.', 'success');
+      }
+      await loadAllData();
+    } catch (err: any) {
+      console.error('Failed to seed database:', err);
+      showToast(err?.message || 'Error seeding database.', 'error');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   useEffect(() => {
     loadAllData();
-  }, []);
+  }, [user]);
 
   // Web Handlers
   const handleSaveWebProject = async (project: AdminWebProject) => {
-    const updated = await saveWebProject(project);
-    setWebProjects((prev) => {
-      const exists = prev.some((p) => p.id === updated.id);
-      return exists ? prev.map((p) => (p.id === updated.id ? updated : p)) : [...prev, updated];
-    });
+    try {
+      const updated = await saveWebProject(project);
+      setWebProjects((prev) => {
+        const exists = prev.some((p) => p.id === updated.id);
+        return exists ? prev.map((p) => (p.id === updated.id ? updated : p)) : [...prev, updated];
+      });
+      showToast('Web project saved to Firestore.', 'success');
+    } catch (err: any) {
+      console.error('Failed to save web project:', err);
+      showToast(err?.message || 'Failed to save web project.', 'error');
+      throw err;
+    }
   };
 
   const handleDeleteWebProject = async (id: string) => {
-    await deleteWebProject(id);
-    setWebProjects((prev) => prev.filter((p) => p.id !== id));
+    try {
+      await deleteWebProject(id);
+      setWebProjects((prev) => prev.filter((p) => p.id !== id));
+      showToast('Web project deleted from Firestore.', 'success');
+    } catch (err: any) {
+      console.error('Failed to delete web project:', err);
+      showToast(err?.message || 'Failed to delete web project.', 'error');
+      throw err;
+    }
   };
 
   // Video Handlers
   const handleSaveVideoProject = async (video: AdminVideoProject) => {
-    const updated = await saveVideoProject(video);
-    setVideoProjects((prev) => {
-      const exists = prev.some((v) => v.id === updated.id);
-      return exists ? prev.map((v) => (v.id === updated.id ? updated : v)) : [...prev, updated];
-    });
+    try {
+      const updated = await saveVideoProject(video);
+      setVideoProjects((prev) => {
+        const exists = prev.some((v) => v.id === updated.id);
+        return exists ? prev.map((v) => (v.id === updated.id ? updated : v)) : [...prev, updated];
+      });
+      showToast('Video project saved to Firestore.', 'success');
+    } catch (err: any) {
+      console.error('Failed to save video project:', err);
+      showToast(err?.message || 'Failed to save video project.', 'error');
+      throw err;
+    }
   };
 
   const handleDeleteVideoProject = async (id: string) => {
-    await deleteVideoProject(id);
-    setVideoProjects((prev) => prev.filter((v) => v.id !== id));
+    try {
+      await deleteVideoProject(id);
+      setVideoProjects((prev) => prev.filter((v) => v.id !== id));
+      showToast('Video project deleted from Firestore.', 'success');
+    } catch (err: any) {
+      console.error('Failed to delete video project:', err);
+      showToast(err?.message || 'Failed to delete video project.', 'error');
+      throw err;
+    }
   };
 
   // Graphic Handlers
   const handleSaveGraphicProject = async (graphic: AdminGraphicProject) => {
-    const updated = await saveGraphicProject(graphic);
-    setGraphicProjects((prev) => {
-      const exists = prev.some((g) => g.id === updated.id);
-      return exists ? prev.map((g) => (g.id === updated.id ? updated : g)) : [...prev, updated];
-    });
+    try {
+      const updated = await saveGraphicProject(graphic);
+      setGraphicProjects((prev) => {
+        const exists = prev.some((g) => g.id === updated.id);
+        return exists ? prev.map((g) => (g.id === updated.id ? updated : g)) : [...prev, updated];
+      });
+      showToast('Graphic project saved to Firestore.', 'success');
+    } catch (err: any) {
+      console.error('Failed to save graphic project:', err);
+      showToast(err?.message || 'Failed to save graphic project.', 'error');
+      throw err;
+    }
   };
 
   const handleDeleteGraphicProject = async (id: string) => {
-    await deleteGraphicProject(id);
-    setGraphicProjects((prev) => prev.filter((g) => g.id !== id));
+    try {
+      await deleteGraphicProject(id);
+      setGraphicProjects((prev) => prev.filter((g) => g.id !== id));
+      showToast('Graphic project deleted from Firestore.', 'success');
+    } catch (err: any) {
+      console.error('Failed to delete graphic project:', err);
+      showToast(err?.message || 'Failed to delete graphic project.', 'error');
+      throw err;
+    }
   };
 
   // Experience Handlers
   const handleSaveExperience = async (exp: AdminExperience) => {
-    const updated = await saveExperience(exp);
-    setExperiences((prev) => {
-      const exists = prev.some((e) => e.id === updated.id);
-      return exists ? prev.map((e) => (e.id === updated.id ? updated : e)) : [...prev, updated];
-    });
+    try {
+      const updated = await saveExperience(exp);
+      setExperiences((prev) => {
+        const exists = prev.some((e) => e.id === updated.id);
+        return exists ? prev.map((e) => (e.id === updated.id ? updated : e)) : [...prev, updated];
+      });
+      showToast('Experience saved to Firestore.', 'success');
+    } catch (err: any) {
+      console.error('Failed to save experience:', err);
+      showToast(err?.message || 'Failed to save experience.', 'error');
+      throw err;
+    }
   };
 
   const handleDeleteExperience = async (id: string) => {
-    await deleteExperience(id);
-    setExperiences((prev) => prev.filter((e) => e.id !== id));
+    try {
+      await deleteExperience(id);
+      setExperiences((prev) => prev.filter((e) => e.id !== id));
+      showToast('Experience deleted from Firestore.', 'success');
+    } catch (err: any) {
+      console.error('Failed to delete experience:', err);
+      showToast(err?.message || 'Failed to delete experience.', 'error');
+      throw err;
+    }
   };
 
   const handleReorderExperiences = async (reordered: AdminExperience[]) => {
-    await reorderExperiences(reordered);
-    setExperiences(reordered);
+    try {
+      await reorderExperiences(reordered);
+      setExperiences(reordered);
+      showToast('Experience order saved to Firestore.', 'success');
+    } catch (err: any) {
+      console.error('Failed to reorder experiences:', err);
+      showToast(err?.message || 'Failed to reorder experiences.', 'error');
+      throw err;
+    }
   };
 
   // About Handler
   const handleSaveAbout = async (data: AdminAboutData) => {
-    const updated = await saveAboutData(data);
-    setAboutData(updated);
+    try {
+      const updated = await saveAboutData(data);
+      setAboutData(updated);
+      showToast('About information saved to Firestore.', 'success');
+    } catch (err: any) {
+      console.error('Failed to save about data:', err);
+      showToast(err?.message || 'Failed to save about data.', 'error');
+      throw err;
+    }
   };
 
   // Settings Handler
   const handleSaveSettings = async (data: AdminSiteSettings) => {
-    const updated = await saveSiteSettings(data);
-    setSettings(updated);
+    try {
+      const updated = await saveSiteSettings(data);
+      setSettings(updated);
+      showToast('Site settings saved to Firestore.', 'success');
+    } catch (err: any) {
+      console.error('Failed to save settings:', err);
+      showToast(err?.message || 'Failed to save settings.', 'error');
+      throw err;
+    }
   };
 
   // Enquiry Handlers
@@ -468,6 +568,8 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBackToPublic }
                       setSelectedEnquiry(enq);
                       setActiveTab('contact');
                     }}
+                    onRefreshData={loadAllData}
+                    onSeedDatabase={handleSeedDatabase}
                   />
                 )}
 
