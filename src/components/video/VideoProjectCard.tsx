@@ -59,7 +59,8 @@ export const VideoProjectCard: React.FC<VideoProjectCardProps> = ({
         <img
           src={project.thumbnail}
           alt={project.title}
-          loading="lazy"
+          loading="eager"
+          fetchPriority="high"
           decoding="async"
           referrerPolicy="no-referrer"
           className="w-full h-full object-cover object-center filter contrast-[1.04] brightness-90 group-hover:scale-[1.03] transition-transform duration-700 ease-out"
