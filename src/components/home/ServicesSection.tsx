@@ -43,7 +43,7 @@ export const ServicesSection: React.FC<ServicesSectionProps> = ({ onServiceSelec
   ];
 
   return (
-    <section id="services" className="w-full bg-[#000000] py-24 border-t border-[#17191D]">
+    <section id="services" className="w-full bg-[#000000] py-16 sm:py-24 border-t border-[#17191D]">
       <div className="max-w-[1360px] mx-auto px-4 sm:px-6 lg:px-8">
         
         {/* SECTION HEADER */}
@@ -52,7 +52,7 @@ export const ServicesSection: React.FC<ServicesSectionProps> = ({ onServiceSelec
             <span className="font-mono text-[11px] uppercase tracking-[0.16em] text-[#8FB8E8] block">
               02 / SERVICES & CAPABILITIES
             </span>
-            <h2 className="font-heading font-bold text-3xl sm:text-4xl lg:text-5xl text-[#F2F4F7] uppercase tracking-[-0.02em]">
+            <h2 className="font-heading font-bold text-2xl sm:text-4xl lg:text-5xl text-[#F2F4F7] uppercase tracking-[-0.02em]">
               WHAT I DO
             </h2>
           </div>
@@ -62,14 +62,14 @@ export const ServicesSection: React.FC<ServicesSectionProps> = ({ onServiceSelec
         </div>
 
         {/* THREE COLUMNS OF SPECIALIZED CRAFT */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 pt-12">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 sm:gap-8 pt-8 sm:pt-12">
           {services.map((svc) => {
             const Icon = svc.icon;
             return (
               <div
                 key={svc.index}
                 onClick={() => onServiceSelect?.(svc.id)}
-                className="group relative bg-[#080808] border border-[#22252A] rounded-[8px] p-8 flex flex-col justify-between transition-all duration-300 hover:border-[#8FB8E8]/50 hover:bg-[#0C0E11] cursor-pointer"
+                className="group relative bg-[#080808] border border-[#22252A] rounded-[8px] p-5 sm:p-8 flex flex-col justify-between transition-all duration-300 hover:border-[#8FB8E8]/50 hover:bg-[#0C0E11] cursor-pointer"
               >
                 {/* Top Number + Icon */}
                 <div className="space-y-6">

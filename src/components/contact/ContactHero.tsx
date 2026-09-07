@@ -20,7 +20,7 @@ export const ContactHero: React.FC = () => {
 
       {/* Main Title & Supporting Statement */}
       <div className="space-y-4 max-w-3xl">
-        <h1 className="font-heading font-extrabold text-5xl sm:text-6xl md:text-7xl lg:text-8xl tracking-[-0.03em] text-[#F2F4F7] uppercase leading-[0.9]">
+        <h1 className="font-heading font-extrabold text-3xl sm:text-5xl md:text-7xl lg:text-8xl tracking-[-0.03em] text-[#F2F4F7] uppercase leading-[0.95] sm:leading-[0.9] break-words">
           LET&apos;S CREATE SOMETHING.
         </h1>
         <p className="font-body text-base sm:text-lg text-[#A7ADB7] leading-relaxed max-w-2xl">

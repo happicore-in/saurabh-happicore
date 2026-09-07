@@ -63,7 +63,7 @@ export const SelectedWorkSection: React.FC<SelectedWorkSectionProps> = ({
   };
 
   return (
-    <section id="work" className="w-full bg-[#000000] py-24 border-t border-[#17191D]">
+    <section id="work" className="w-full bg-[#000000] py-16 sm:py-24 border-t border-[#17191D]">
       <div className="max-w-[1360px] mx-auto px-4 sm:px-6 lg:px-8">
         
         {/* SECTION HEADER */}
@@ -72,7 +72,7 @@ export const SelectedWorkSection: React.FC<SelectedWorkSectionProps> = ({
             <span className="font-mono text-[11px] uppercase tracking-[0.16em] text-[#8FB8E8] block">
               01 / SELECTED WORK
             </span>
-            <h2 className="font-heading font-bold text-3xl sm:text-4xl lg:text-5xl text-[#F2F4F7] uppercase tracking-[-0.02em]">
+            <h2 className="font-heading font-bold text-2xl sm:text-4xl lg:text-5xl text-[#F2F4F7] uppercase tracking-[-0.02em]">
               WORK THAT SPEAKS
             </h2>
           </div>
@@ -82,7 +82,7 @@ export const SelectedWorkSection: React.FC<SelectedWorkSectionProps> = ({
         </div>
 
         {/* WORK GRID OR SKELETON */}
-        <div className="pt-12 space-y-12">
+        <div className="pt-8 sm:pt-12 space-y-8 sm:space-y-12">
           {isLoading ? (
             <SelectedWorkSectionSkeleton />
           ) : heroProject ? (
@@ -107,21 +107,21 @@ export const SelectedWorkSection: React.FC<SelectedWorkSectionProps> = ({
                     <div className="absolute inset-0 bg-gradient-to-t lg:bg-gradient-to-r from-transparent via-transparent to-[#080808]/90 pointer-events-none" />
                     
                     {/* Play indicator badge */}
-                    <div className="absolute top-4 left-4 inline-flex items-center gap-2 px-3 py-1.5 bg-[#000000]/80 backdrop-blur-md border border-[#22252A] rounded-full font-mono text-[11px] text-[#F2F4F7] tracking-wider uppercase">
+                    <div className="absolute top-3 sm:top-4 left-3 sm:left-4 inline-flex items-center gap-2 px-2.5 sm:px-3 py-1 sm:py-1.5 bg-[#000000]/80 backdrop-blur-md border border-[#22252A] rounded-full font-mono text-[10px] sm:text-[11px] text-[#F2F4F7] tracking-wider uppercase">
                       {renderBadgeIcon(heroProject.type, true)}
                       <span>{heroProject.badgeLabel}</span>
                     </div>
                   </div>
 
                   {/* Text side */}
-                  <div className="lg:col-span-4 p-6 sm:p-8 lg:p-10 flex flex-col justify-between space-y-6">
+                  <div className="lg:col-span-4 p-4 sm:p-8 lg:p-10 flex flex-col justify-between space-y-6">
                     <div className="space-y-4">
                       <div className="flex items-center justify-between text-[11px] font-mono tracking-[0.14em] uppercase text-[#8FB8E8]">
                         <span>{heroProject.categoryLabel}</span>
                         <span className="text-[#6F7682]">{heroProject.year}</span>
                       </div>
 
-                      <h3 className="font-heading font-bold text-2xl sm:text-3xl text-[#F2F4F7] uppercase tracking-wide group-hover:text-[#8FB8E8] transition-colors">
+                      <h3 className="font-heading font-bold text-xl sm:text-3xl text-[#F2F4F7] uppercase tracking-wide group-hover:text-[#8FB8E8] transition-colors">
                         {heroProject.title}
                       </h3>
 
@@ -129,7 +129,7 @@ export const SelectedWorkSection: React.FC<SelectedWorkSectionProps> = ({
                         {heroProject.description}
                       </p>
 
-                      <div className="flex flex-wrap gap-2 pt-2">
+                      <div className="flex flex-wrap gap-1.5 sm:gap-2 pt-2">
                         {heroProject.tags.map((tag) => (
                           <span key={tag} className="px-2.5 py-1 bg-[#111111] border border-[#22252A] rounded text-[10px] font-mono text-[#6F7682] uppercase tracking-wider">
                             {tag}
@@ -139,11 +139,11 @@ export const SelectedWorkSection: React.FC<SelectedWorkSectionProps> = ({
                     </div>
 
                     <div className="pt-4 border-t border-[#17191D] flex items-center justify-between">
-                      <span className="group-hover:translate-x-1 inline-flex items-center gap-2 font-mono text-[12px] uppercase tracking-[0.1em] text-[#F2F4F7] group-hover:text-[#8FB8E8] transition-all">
+                      <span className="group-hover:translate-x-1 inline-flex items-center gap-2 font-mono text-[11px] sm:text-[12px] uppercase tracking-[0.1em] text-[#F2F4F7] group-hover:text-[#8FB8E8] transition-all">
                         <span>VIEW PROJECT</span>
                         <ArrowRight className="w-4 h-4 text-[#8FB8E8]" />
                       </span>
-                      <span className="font-mono text-[11px] text-[#6F7682]">
+                      <span className="font-mono text-[10px] sm:text-[11px] text-[#6F7682]">
                         {heroProject.role}
                       </span>
                     </div>
@@ -154,7 +154,7 @@ export const SelectedWorkSection: React.FC<SelectedWorkSectionProps> = ({
 
               {/* 2. TWO-COLUMN ROW / REMAINING FEATURED PROJECTS */}
               {gridProjects.length > 0 && (
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 sm:gap-8">
                   {gridProjects.map((proj) => (
                     <div
                       key={proj.id}
@@ -170,22 +170,22 @@ export const SelectedWorkSection: React.FC<SelectedWorkSectionProps> = ({
                           referrerPolicy="no-referrer"
                           className="w-full h-full object-cover object-center filter contrast-[1.1] brightness-85 transition-transform duration-700 ease-out group-hover:scale-105"
                         />
-                        <div className="absolute top-3 left-3 inline-flex items-center gap-1.5 px-2.5 py-1 bg-[#000000]/80 backdrop-blur-md border border-[#22252A] rounded-full font-mono text-[10px] text-[#F2F4F7] tracking-wider uppercase">
+                        <div className="absolute top-2.5 sm:top-3 left-2.5 sm:left-3 inline-flex items-center gap-1.5 px-2 sm:px-2.5 py-1 bg-[#000000]/80 backdrop-blur-md border border-[#22252A] rounded-full font-mono text-[9px] sm:text-[10px] text-[#F2F4F7] tracking-wider uppercase">
                           {renderBadgeIcon(proj.type, false)}
                           <span>{proj.badgeLabel}</span>
                         </div>
                       </div>
 
-                      <div className="p-6 space-y-4 flex-1 flex flex-col justify-between">
+                      <div className="p-4 sm:p-6 space-y-4 flex-1 flex flex-col justify-between">
                         <div className="space-y-2">
                           <div className="flex items-center justify-between text-[11px] font-mono tracking-[0.12em] uppercase text-[#8FB8E8]">
                             <span>{proj.categoryLabel}</span>
                             <span className="text-[#6F7682]">{proj.year}</span>
                           </div>
-                          <h3 className="font-heading font-bold text-xl sm:text-2xl text-[#F2F4F7] uppercase tracking-wide group-hover:text-[#8FB8E8] transition-colors">
+                          <h3 className="font-heading font-bold text-lg sm:text-2xl text-[#F2F4F7] uppercase tracking-wide group-hover:text-[#8FB8E8] transition-colors">
                             {proj.title}
                           </h3>
-                          <p className="font-body text-[14px] text-[#A7ADB7] leading-relaxed">
+                          <p className="font-body text-[13px] sm:text-[14px] text-[#A7ADB7] leading-relaxed">
                             {proj.description}
                           </p>
                         </div>

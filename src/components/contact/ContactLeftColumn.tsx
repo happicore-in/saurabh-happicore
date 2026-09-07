@@ -208,7 +208,7 @@ export const ContactLeftColumn: React.FC<ContactLeftColumnProps> = ({ onShowNoti
         </div>
 
         {/* LinkedIn & Happicore Row */}
-        <div className="grid grid-cols-2 gap-3">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
           <a
             href={linkedinUrl}
             target="_blank"

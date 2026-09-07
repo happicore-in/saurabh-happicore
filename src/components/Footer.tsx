@@ -123,10 +123,10 @@ export const Footer: React.FC<FooterProps> = ({ onNavigate }) => {
                 <span className="text-[10px] text-[#6F7682] uppercase tracking-wider block">WORK EMAIL:</span>
                 <a
                   href={`mailto:${emailWork}`}
-                  className="flex items-center gap-2 text-[#F2F4F7] hover:text-[#8FB8E8] transition-colors"
+                  className="flex items-center gap-2 text-[#F2F4F7] hover:text-[#8FB8E8] transition-colors min-w-0"
                 >
-                  <Mail className="w-3.5 h-3.5 text-[#6F7682]" />
-                  <span>{emailWork}</span>
+                  <Mail className="w-3.5 h-3.5 text-[#6F7682] shrink-0" />
+                  <span className="break-all">{emailWork}</span>
                 </a>
               </div>
 
@@ -135,16 +135,16 @@ export const Footer: React.FC<FooterProps> = ({ onNavigate }) => {
                 <span className="text-[10px] text-[#6F7682] uppercase tracking-wider block">PERSONAL EMAIL:</span>
                 <a
                   href={`mailto:${emailPersonal}`}
-                  className="flex items-center gap-2 text-[#A7ADB7] hover:text-[#F2F4F7] transition-colors"
+                  className="flex items-center gap-2 text-[#A7ADB7] hover:text-[#F2F4F7] transition-colors min-w-0"
                 >
-                  <Mail className="w-3.5 h-3.5 text-[#6F7682]" />
-                  <span>{emailPersonal}</span>
+                  <Mail className="w-3.5 h-3.5 text-[#6F7682] shrink-0" />
+                  <span className="break-all">{emailPersonal}</span>
                 </a>
               </div>
             </div>
 
             {/* Social / Contact links */}
-            <div className="pt-2 flex flex-wrap items-center gap-3 text-[11px] font-mono uppercase tracking-[0.1em]">
+            <div className="pt-2 flex flex-wrap items-center gap-2 sm:gap-3 text-[11px] font-mono uppercase tracking-[0.1em]">
               <a
                 href={linkedinUrl}
                 target="_blank"
@@ -178,14 +178,14 @@ export const Footer: React.FC<FooterProps> = ({ onNavigate }) => {
 
         {/* Bottom Tier: Workspace, System Status, Copyright */}
         <div className="pt-8 flex flex-col sm:flex-row items-center justify-between gap-4 text-center sm:text-left">
-          <div className="font-mono text-[11px] text-[#6F7682] tracking-[0.1em] uppercase flex items-center gap-2">
+          <div className="font-mono text-[11px] text-[#6F7682] tracking-[0.1em] uppercase flex flex-wrap items-center justify-center sm:justify-start gap-2">
             <span>WORKSPACE:</span>
             <span className="text-[#F2F4F7]">{happicoreName}</span>
             <span className="text-[#22252A]">/</span>
-            <span className="text-[#8FB8E8]">{cleanHappicoreUrl}</span>
+            <span className="text-[#8FB8E8] break-all">{cleanHappicoreUrl}</span>
           </div>
 
-          <div className="font-mono text-[11px] text-[#6F7682] tracking-[0.08em] uppercase flex items-center gap-3">
+          <div className="font-mono text-[11px] text-[#6F7682] tracking-[0.08em] uppercase flex flex-wrap items-center justify-center sm:justify-end gap-2 sm:gap-3">
             <span>{copyright}</span>
             <span className="text-[#22252A]">/</span>
             <button

@@ -81,7 +81,7 @@ export const HeroSection: React.FC<HeroSectionProps> = ({
     >
       {/* Subtle ambient lighting - very soft and non-distracting */}
       <div
-        className="pointer-events-none absolute top-1/3 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] rounded-full opacity-15 blur-[120px] bg-gradient-to-b from-[#8FB8E8]/20 via-[#F5A623]/10 to-transparent"
+        className="pointer-events-none absolute top-1/3 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[320px] sm:w-[600px] h-[320px] sm:h-[600px] rounded-full opacity-15 blur-[120px] bg-gradient-to-b from-[#8FB8E8]/20 via-[#F5A623]/10 to-transparent"
         aria-hidden="true"
       />
 
@@ -159,7 +159,7 @@ export const HeroSection: React.FC<HeroSectionProps> = ({
             </div>
 
             {/* Seamless Portrait Container - NO CARDS, NO BROWSER FRAMES, PURE INTEGRATION */}
-            <div className="relative w-[280px] sm:w-[340px] md:w-[380px] lg:w-[410px] aspect-[3/4] mx-auto select-none bg-[#000000]">
+            <div className="relative w-[260px] xs:w-[280px] sm:w-[340px] md:w-[380px] lg:w-[410px] max-w-[calc(100vw-2.5rem)] aspect-[3/4] mx-auto select-none bg-[#000000]">
               {isLoading ? (
                 /* Neutral loading state / pure black area matching background */
                 <div className="w-full h-full bg-[#050608] flex items-center justify-center">
@@ -235,8 +235,8 @@ export const HeroSection: React.FC<HeroSectionProps> = ({
         </div>
 
         {/* OVERSIZED TYPOGRAPHY: 'SAURABH' ACROSS FULL HERO WIDTH */}
-        <div className="w-full text-center relative mt-2 lg:-mt-10 z-20 pointer-events-none">
-          <h1 className="font-heading font-extrabold text-[15vw] sm:text-[14vw] lg:text-[14.5vw] text-[#F2F4F7] uppercase tracking-[-0.04em] leading-[0.8] select-none">
+        <div className="w-full text-center relative mt-2 lg:-mt-10 z-20 pointer-events-none overflow-hidden">
+          <h1 className="font-heading font-extrabold text-[15vw] sm:text-[14vw] lg:text-[14.5vw] text-[#F2F4F7] uppercase tracking-[-0.04em] leading-[0.85] select-none break-words">
             {siteDisplayName}
           </h1>
         </div>

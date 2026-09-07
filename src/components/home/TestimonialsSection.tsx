@@ -34,35 +34,35 @@ export const TestimonialsSection: React.FC = () => {
   ];
 
   return (
-    <section id="testimonials" className="w-full bg-[#000000] py-24 border-t border-[#17191D]">
+    <section id="testimonials" className="w-full bg-[#000000] py-16 sm:py-24 border-t border-[#17191D]">
       <div className="max-w-[1360px] mx-auto px-4 sm:px-6 lg:px-8">
         
         {/* SECTION HEADER */}
         <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 pb-12 border-b border-[#17191D]">
           <div className="space-y-3">
-            <div className="flex items-center gap-2 font-mono text-[11px] uppercase tracking-[0.16em] text-[#8FB8E8]">
+            <div className="flex flex-wrap items-center gap-2 font-mono text-[11px] uppercase tracking-[0.16em] text-[#8FB8E8]">
               <span>06 / TESTIMONIALS</span>
               <span className="text-[#22252A]">•</span>
               <span className="text-[#6F7682]">CLIENT & COLLABORATOR FEEDBACK</span>
             </div>
-            <h2 className="font-heading font-bold text-3xl sm:text-4xl lg:text-5xl text-[#F2F4F7] uppercase tracking-[-0.02em]">
+            <h2 className="font-heading font-bold text-2xl sm:text-4xl lg:text-5xl text-[#F2F4F7] uppercase tracking-[-0.02em]">
               WHAT PEOPLE SAY
             </h2>
           </div>
           
           {/* Admin Dashboard Integration Status Pill */}
-          <div className="inline-flex items-center gap-2 px-3 py-1.5 bg-[#080808] border border-[#22252A] rounded font-mono text-[11px] text-[#A7ADB7]">
+          <div className="inline-flex items-center gap-2 px-3 py-1.5 bg-[#080808] border border-[#22252A] rounded font-mono text-[10px] sm:text-[11px] text-[#A7ADB7]">
             <Database className="w-3.5 h-3.5 text-[#8FB8E8]" />
             <span>CONNECTS TO ADMIN DASHBOARD</span>
           </div>
         </div>
 
         {/* THREE EDITORIAL TESTIMONIAL SLOTS */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-8 pt-12">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 sm:gap-8 pt-8 sm:pt-12">
           {testimonialSlots.map((item) => (
             <div
               key={item.slotId}
-              className="bg-[#080808] border border-[#22252A] rounded-[8px] p-7 flex flex-col justify-between space-y-8 hover:border-[#8FB8E8]/30 transition-colors"
+              className="bg-[#080808] border border-[#22252A] rounded-[8px] p-5 sm:p-7 flex flex-col justify-between space-y-6 sm:space-y-8 hover:border-[#8FB8E8]/30 transition-colors"
             >
               {/* Quote Top */}
               <div className="space-y-4">

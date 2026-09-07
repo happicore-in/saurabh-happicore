@@ -44,7 +44,7 @@ export const HappicoreSection: React.FC = () => {
   const externalHref = studioUrl.startsWith('http') ? studioUrl : `https://${studioUrl}`;
 
   return (
-    <section id="happicore" className="w-full bg-[#000000] py-24 border-t border-[#17191D]">
+    <section id="happicore" className="w-full bg-[#000000] py-16 sm:py-24 border-t border-[#17191D]">
       <div className="max-w-[1360px] mx-auto px-4 sm:px-6 lg:px-8">
         
         {/* SECTION HEADER */}
@@ -53,7 +53,7 @@ export const HappicoreSection: React.FC = () => {
             <span className="font-mono text-[11px] uppercase tracking-[0.16em] text-[#F5A623] block">
               05 / CREATIVE WORKSPACE
             </span>
-            <h2 className="font-heading font-bold text-3xl sm:text-4xl lg:text-5xl text-[#F2F4F7] uppercase tracking-[-0.02em]">
+            <h2 className="font-heading font-bold text-2xl sm:text-4xl lg:text-5xl text-[#F2F4F7] uppercase tracking-[-0.02em]">
               MORE OF MY WORK — {studioName}
             </h2>
           </div>
@@ -63,11 +63,11 @@ export const HappicoreSection: React.FC = () => {
         </div>
 
         {/* WORKSPACE SHOWCASE: Image + Studio Profile */}
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 items-stretch pt-12">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 sm:gap-10 items-stretch pt-8 sm:pt-12">
           
           {/* Visual Workspace Image */}
           <div className="lg:col-span-7 relative group rounded-[8px] overflow-hidden border border-[#22252A] bg-[#080808]">
-            <div className="relative aspect-[4/3] w-full h-full min-h-[340px] overflow-hidden bg-[#0D0D0D]">
+            <div className="relative aspect-[4/3] w-full h-full min-h-[260px] sm:min-h-[340px] overflow-hidden bg-[#0D0D0D]">
               <img
                 src={workspaceImg}
                 alt={`${studioName} Creative Studio Setup`}
@@ -77,21 +77,21 @@ export const HappicoreSection: React.FC = () => {
               <div className="absolute inset-0 bg-gradient-to-t from-[#000000]/90 via-[#000000]/30 to-transparent pointer-events-none" />
 
               {/* Badges on image */}
-              <div className="absolute top-4 left-4 inline-flex items-center gap-2 px-3 py-1 bg-[#000000]/80 backdrop-blur-md border border-[#22252A] rounded-full font-mono text-[11px] text-[#F2F4F7] uppercase">
+              <div className="absolute top-3 sm:top-4 left-3 sm:left-4 inline-flex items-center gap-1.5 sm:gap-2 px-2.5 sm:px-3 py-1 bg-[#000000]/80 backdrop-blur-md border border-[#22252A] rounded-full font-mono text-[10px] sm:text-[11px] text-[#F2F4F7] uppercase">
                 <Sparkles className="w-3 h-3 text-[#F5A623]" />
                 <span>{studioName} CREATIVE LAB</span>
               </div>
 
-              <div className="absolute bottom-4 left-4 right-4 flex items-center justify-between font-mono text-[11px] text-[#A7ADB7] backdrop-blur-sm bg-[#000000]/60 p-3 rounded border border-[#22252A]">
-                <span>URL: {cleanUrl}</span>
+              <div className="absolute bottom-3 sm:bottom-4 left-3 sm:left-4 right-3 sm:right-4 flex flex-wrap items-center justify-between gap-1.5 font-mono text-[10px] sm:text-[11px] text-[#A7ADB7] backdrop-blur-sm bg-[#000000]/70 p-2.5 sm:p-3 rounded border border-[#22252A]">
+                <span className="truncate max-w-[200px] sm:max-w-none">URL: {cleanUrl}</span>
                 <span className="text-[#8FB8E8]">ACTIVE REPOSITORY</span>
               </div>
             </div>
           </div>
 
           {/* Studio Profile & Activities */}
-          <div className="lg:col-span-5 bg-[#080808] border border-[#22252A] rounded-[8px] p-8 flex flex-col justify-between space-y-6">
-            <div className="space-y-5">
+          <div className="lg:col-span-5 bg-[#080808] border border-[#22252A] rounded-[8px] p-5 sm:p-8 flex flex-col justify-between space-y-6">
+            <div className="space-y-4 sm:space-y-5">
               <div className="flex items-center justify-between">
                 <span className="font-mono text-[11px] text-[#8FB8E8] uppercase tracking-[0.14em]">
                   INDEPENDENT STUDIO
@@ -101,11 +101,11 @@ export const HappicoreSection: React.FC = () => {
                 </span>
               </div>
 
-              <h3 className="font-heading font-bold text-3xl text-[#F2F4F7] uppercase tracking-wide">
+              <h3 className="font-heading font-bold text-2xl sm:text-3xl text-[#F2F4F7] uppercase tracking-wide">
                 {studioName}
               </h3>
 
-              <p className="font-body text-[15px] text-[#A7ADB7] leading-relaxed">
+              <p className="font-body text-[14px] sm:text-[15px] text-[#A7ADB7] leading-relaxed">
                 {studioDesc}
               </p>
 
@@ -143,10 +143,10 @@ export const HappicoreSection: React.FC = () => {
                 href={externalHref}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="w-full inline-flex items-center justify-center gap-2 px-6 py-3.5 bg-[#E8EEF7] hover:bg-[#FFFFFF] text-[#050505] font-mono text-[12px] font-semibold uppercase tracking-[0.1em] rounded-[4px] transition-colors"
+                className="w-full inline-flex items-center justify-center gap-2 px-4 sm:px-6 py-3.5 bg-[#E8EEF7] hover:bg-[#FFFFFF] text-[#050505] font-mono text-[11px] sm:text-[12px] font-semibold uppercase tracking-[0.1em] rounded-[4px] transition-colors text-center"
               >
                 <span>VISIT {studioName} ({cleanUrl})</span>
-                <ArrowUpRight className="w-4 h-4 text-[#050505]" />
+                <ArrowUpRight className="w-4 h-4 text-[#050505] shrink-0" />
               </a>
             </div>
 

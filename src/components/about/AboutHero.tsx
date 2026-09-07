@@ -62,7 +62,7 @@ export const AboutHero: React.FC = () => {
 
       {/* Main Title & Supporting Statement */}
       <div className="space-y-4 max-w-3xl">
-        <h1 className="font-heading font-extrabold text-5xl sm:text-6xl md:text-7xl lg:text-8xl tracking-[-0.03em] text-[#F2F4F7] uppercase leading-[0.9]">
+        <h1 className="font-heading font-extrabold text-4xl sm:text-6xl md:text-7xl lg:text-8xl tracking-[-0.03em] text-[#F2F4F7] uppercase leading-[0.9] break-words">
           ABOUT ME
         </h1>
         <p className="font-body text-base sm:text-lg text-[#A7ADB7] leading-relaxed max-w-2xl">

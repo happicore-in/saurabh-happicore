@@ -11,7 +11,7 @@ export const ExperienceCard: React.FC<ExperienceCardProps> = ({ item, index }) =
   return (
     <div
       id={`experience-entry-${item.id}`}
-      className="relative group bg-[#080808] hover:bg-[#0B0C0E] border border-[#22252A] hover:border-[#8FB8E8]/60 rounded-[8px] p-6 sm:p-8 transition-all duration-200 shadow-sm hover:shadow-lg"
+      className="relative group bg-[#080808] hover:bg-[#0B0C0E] border border-[#22252A] hover:border-[#8FB8E8]/60 rounded-[8px] p-4 sm:p-8 transition-all duration-200 shadow-sm hover:shadow-lg"
     >
       {/* 1. TOP METADATA ROW */}
       <div className="flex flex-wrap items-center justify-between gap-3 pb-4 border-b border-[#17191D]">

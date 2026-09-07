@@ -65,7 +65,7 @@ export const AboutPreviewSection: React.FC<AboutPreviewSectionProps> = ({ onMore
       : 'Whether cutting high-octane aftermovies with tight rhythmic sync, designing identity systems and event posters with deliberate typography, or engineering modern responsive web interfaces, I focus on work that feels authentic, energetic, and durable.';
 
   return (
-    <section id="about" className="w-full bg-[#000000] py-24 border-t border-[#17191D]">
+    <section id="about" className="w-full bg-[#000000] py-16 sm:py-24 border-t border-[#17191D]">
       <div className="max-w-[1360px] mx-auto px-4 sm:px-6 lg:px-8">
         
         {/* SECTION HEADER */}
@@ -74,7 +74,7 @@ export const AboutPreviewSection: React.FC<AboutPreviewSectionProps> = ({ onMore
             <span className="font-mono text-[11px] uppercase tracking-[0.16em] text-[#8FB8E8] block">
               04 / ABOUT
             </span>
-            <h2 className="font-heading font-bold text-3xl sm:text-4xl lg:text-5xl text-[#F2F4F7] uppercase tracking-[-0.02em]">
+            <h2 className="font-heading font-bold text-2xl sm:text-4xl lg:text-5xl text-[#F2F4F7] uppercase tracking-[-0.02em]">
               A LITTLE ABOUT ME
             </h2>
           </div>
@@ -84,10 +84,10 @@ export const AboutPreviewSection: React.FC<AboutPreviewSectionProps> = ({ onMore
         </div>
 
         {/* TWO-COLUMN EDITORIAL COMPOSITION */}
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 lg:gap-16 items-center pt-12">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 sm:gap-12 lg:gap-16 items-center pt-8 sm:pt-12">
           
           {/* LEFT: Portrait in Editorial Frame */}
-          <div className="lg:col-span-5 relative">
+          <div className="lg:col-span-5 relative max-w-md mx-auto lg:max-w-none w-full">
             <div className="relative bg-[#080808] border border-[#22252A] rounded-[8px] p-3 overflow-hidden group">
               <div className="relative aspect-[3/4] overflow-hidden rounded-[4px] bg-[#0D0D0D]">
                 {isLoading ? (
@@ -122,10 +122,10 @@ export const AboutPreviewSection: React.FC<AboutPreviewSectionProps> = ({ onMore
           </div>
 
           {/* RIGHT: Editorial Bio Statement & Technical Credentials */}
-          <div className="lg:col-span-7 space-y-8">
-            <div className="space-y-6">
+          <div className="lg:col-span-7 space-y-6 sm:space-y-8">
+            <div className="space-y-4 sm:space-y-6">
               {/* Primary Quote */}
-              <blockquote className="font-heading font-medium text-2xl sm:text-3xl text-[#F2F4F7] leading-snug tracking-[-0.01em]">
+              <blockquote className="font-heading font-medium text-xl sm:text-3xl text-[#F2F4F7] leading-snug tracking-[-0.01em]">
                 &ldquo;I&apos;m <span className="text-[#8FB8E8] font-bold">{quoteTitle}</span>, a {roleText} currently pursuing {degree} from <span className="text-[#F5A623] font-bold">{institution}</span>.&rdquo;
               </blockquote>
 
