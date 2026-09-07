@@ -1,9 +1,5 @@
 import React, { useState, useEffect } from 'react';
 import { GraphicFilterType, GraphicProjectItem } from '../../types';
-import {
-  FEATURED_GRAPHIC_PROJECT,
-  SELECTED_GRAPHIC_PROJECTS,
-} from '../../data/graphicProjects';
 import { getPublicGraphicProjects } from '../../services/portfolioDataService';
 import { GraphicHero } from './GraphicHero';
 import { FeaturedGraphicWork } from './FeaturedGraphicWork';
@@ -90,24 +86,21 @@ export const GraphicPage: React.FC<GraphicPageProps> = ({
   const showFeatured =
     graphicData.featured && (activeFilter === 'all' || graphicData.featured.filterCategory === activeFilter);
 
-  // Split selected projects into rows for the curated 'all' layout
+  // Split selected projects dynamically into editorial rows for the curated 'all' layout
   const isAllFilter = activeFilter === 'all';
-  // Project 0: Badminton League 2026 Identity Suite
-  const badmintonProject =
-    graphicData.selected.find((p) => p.id === 'badminton-league-2026-identity-suite') ||
-    graphicData.selected[0];
-  // Middle 3 items
-  const middleRowProjects = graphicData.selected.filter(
-    (p) =>
-      p.id === 'paradox-2026-stage-announcement' ||
-      p.id === 'sportify-official-jersey-design' ||
-      p.id === 'rkm-lucknow-annual-convention-brochure'
-  );
-  // Split item
-  const splitProject =
-    graphicData.selected.find(
-      (p) => p.id === 'happicore-abstract-typographic-posters'
-    ) || graphicData.selected[1];
+  const selectedList = graphicData.selected;
+
+  // Dynamic Row 1 (wide hero showcase): 1st available selected project
+  const topWideProject = selectedList.length > 0 ? selectedList[0] : null;
+
+  // Dynamic Row 2 (3-column curated row): next up to 3 projects
+  const middleRowProjects = selectedList.slice(1, 4);
+
+  // Dynamic Row 3 (wide split showcase): 5th project (index 4) if available
+  const splitProject = selectedList.length > 4 ? selectedList[4] : null;
+
+  // Dynamic Row 4 (extra projects beyond 5): any remaining projects rendered gracefully
+  const extraProjects = selectedList.slice(5);
 
   return (
     <div className="w-full bg-[#000000] text-[#F2F4F7]">
@@ -184,32 +177,34 @@ export const GraphicPage: React.FC<GraphicPageProps> = ({
               </button>
             </div>
           ) : isAllFilter ? (
-            /* Curated Editorial Asymmetric Grid (Matching graphic work.png) */
+            /* Curated Editorial Asymmetric Grid */
             <div className="space-y-8">
-              {/* Row 1: Badminton League 2026 Suite (16:9 Landscape) */}
-              {badmintonProject && (
+              {/* Row 1: Top Wide Project (16:9 Landscape) */}
+              {topWideProject && (
                 <div className="w-full">
                   <GraphicProjectCard
-                    project={badmintonProject}
-                    onOpenLightbox={() => setLightboxProject(badmintonProject)}
+                    project={topWideProject}
+                    onOpenLightbox={() => setLightboxProject(topWideProject)}
                     onShowNotice={onShowNotice}
                   />
                 </div>
               )}
 
-              {/* Row 2: 3-column curated row (1:1 Square, 4:3 Apparel, 4:3 Booklet) */}
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 items-stretch">
-                {middleRowProjects.map((project) => (
-                  <GraphicProjectCard
-                    key={project.id}
-                    project={project}
-                    onOpenLightbox={() => setLightboxProject(project)}
-                    onShowNotice={onShowNotice}
-                  />
-                ))}
-              </div>
+              {/* Row 2: 3-column curated row */}
+              {middleRowProjects.length > 0 && (
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 items-stretch">
+                  {middleRowProjects.map((project) => (
+                    <GraphicProjectCard
+                      key={project.id}
+                      project={project}
+                      onOpenLightbox={() => setLightboxProject(project)}
+                      onShowNotice={onShowNotice}
+                    />
+                  ))}
+                </div>
+              )}
 
-              {/* Row 3: Wide Horizontal Split (Happicore Swiss Brutalism) */}
+              {/* Row 3: Wide Horizontal Split */}
               {splitProject && (
                 <div className="w-full">
                   <GraphicProjectCard
@@ -217,6 +212,20 @@ export const GraphicPage: React.FC<GraphicPageProps> = ({
                     onOpenLightbox={() => setLightboxProject(splitProject)}
                     onShowNotice={onShowNotice}
                   />
+                </div>
+              )}
+
+              {/* Row 4: Any extra projects dynamically rendered */}
+              {extraProjects.length > 0 && (
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 items-stretch pt-4">
+                  {extraProjects.map((project) => (
+                    <GraphicProjectCard
+                      key={project.id}
+                      project={project}
+                      onOpenLightbox={() => setLightboxProject(project)}
+                      onShowNotice={onShowNotice}
+                    />
+                  ))}
                 </div>
               )}
             </div>

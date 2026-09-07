@@ -1,7 +1,5 @@
 import React, { useState, useEffect } from 'react';
 import { ArrowRight, Play, ExternalLink, Sparkles } from 'lucide-react';
-import paradoxImg from '../../assets/images/paradox_aftermovie_1788625281034.jpg';
-import webDevImg from '../../assets/images/web_dev_project_1788625300809.jpg';
 import { getPublicHomeFeaturedProjects, PublicHomeFeaturedItem } from '../../services/portfolioDataService';
 import { SelectedWorkSectionSkeleton } from '../common/Skeletons';
 
@@ -9,74 +7,6 @@ interface SelectedWorkSectionProps {
   onViewAllWork?: () => void;
   onProjectClick?: (projectId: string) => void;
 }
-
-const DEFAULT_FEATURED: PublicHomeFeaturedItem[] = [
-  {
-    id: 'paradox-2026-aftermovie',
-    type: 'video',
-    title: 'Paradox 2026 Aftermovie',
-    categoryLabel: 'VIDEO / FESTIVAL AFTERMOVIE',
-    year: '2026',
-    image: paradoxImg,
-    description:
-      'Official energetic festival aftermovie capturing raw crowd euphoria, stage pyrotechnics, and live musical momentum with rhythmic cutting and deep color grading.',
-    badgeLabel: 'AFTERMOVIE • 4K',
-    tags: ['PACING & SOUND DESIGN', 'COLOR GRADING'],
-    role: 'DIRECTION & EDIT',
-  },
-  {
-    id: 'spotify-recap',
-    type: 'video',
-    title: 'Spotify Annual Recap',
-    categoryLabel: 'VIDEO / SPORTS EVENT',
-    year: '2024',
-    image: 'https://images.unsplash.com/photo-1546519638-68e109498ffc?q=80&w=1200&auto=format&fit=crop',
-    description:
-      'High-retention sports promotional recap film with dynamic pacing, synchronized beat markers, and high-contrast color grading.',
-    badgeLabel: 'SPORTS RECAP',
-    tags: ['FAST-CUT EDITING', 'PACING'],
-    role: 'FAST-CUT EDITING',
-  },
-  {
-    id: 'event-reels',
-    type: 'video',
-    title: 'Promotional Event Reels',
-    categoryLabel: 'MOTION / CLUB EXPERIENCE',
-    year: '2024',
-    image: 'https://images.unsplash.com/photo-1514525253161-7a46d19cd819?q=80&w=1200&auto=format&fit=crop',
-    description:
-      'High-conversion promotional short-form motion editorial content for live entertainment venues, driving viral social reach and ticket conversions.',
-    badgeLabel: 'CLUB EXPERIENCE',
-    tags: ['SOCIAL CAMPAIGN', '9:16 REELS'],
-    role: 'SOCIAL CAMPAIGN',
-  },
-  {
-    id: 'lucknow-aftermovie',
-    type: 'video',
-    title: 'Reel / Lucknow Chapter Aftermovie',
-    categoryLabel: 'VIDEOGRAPHY / EVENT FILM',
-    year: '2024',
-    image: 'https://images.unsplash.com/photo-1492684223066-81342ee5ff30?q=80&w=1200&auto=format&fit=crop',
-    description:
-      'Cinematic event documentation and brand recap film with sound design, attendee voiceovers, and crowd energy.',
-    badgeLabel: 'EVENT DOCUMENTARY',
-    tags: ['CINEMATIC DOCUMENTARY', 'AUDIO MASTER'],
-    role: 'CINEMATIC DOCUMENTARY',
-  },
-  {
-    id: 'web-dev-interactive',
-    type: 'web',
-    title: 'A Web Development Project',
-    categoryLabel: 'WEB / INTERACTIVE',
-    year: '2024',
-    image: webDevImg,
-    description:
-      'Modern responsive system and high-performance digital presence with bespoke interactions, modular architecture, and micro-animations.',
-    badgeLabel: 'WEB INTERFACE',
-    tags: ['REACT & TAILWIND', 'TYPESCRIPT'],
-    role: 'REACT & TAILWIND',
-  },
-];
 
 export const SelectedWorkSection: React.FC<SelectedWorkSectionProps> = ({
   onViewAllWork,

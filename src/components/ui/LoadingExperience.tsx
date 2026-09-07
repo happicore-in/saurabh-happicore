@@ -13,6 +13,7 @@ export const LoadingExperience: React.FC<LoadingExperienceProps> = ({
   const [step, setStep] = useState<number>(0);
 
   const finish = () => {
+    document.body.style.overflow = '';
     if (typeof onComplete === 'function') {
       onComplete();
     } else if (typeof onLoadingComplete === 'function') {
@@ -21,8 +22,13 @@ export const LoadingExperience: React.FC<LoadingExperienceProps> = ({
   };
 
   useEffect(() => {
+    // Prevent body scroll during the intro
+    const originalOverflow = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+
     // Fast path for reduced motion
-    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+    if (typeof window !== 'undefined' && window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+      document.body.style.overflow = originalOverflow;
       finish();
       return;
     }
@@ -32,7 +38,7 @@ export const LoadingExperience: React.FC<LoadingExperienceProps> = ({
     const timer2 = setTimeout(() => setStep(2), 850);
     const timer3 = setTimeout(() => {
       finish();
-    }, 1150);
+    }, 1250);
 
     // Allow user to click anywhere or press Esc/Space to skip immediately
     const handleQuickSkip = () => {
@@ -41,6 +47,7 @@ export const LoadingExperience: React.FC<LoadingExperienceProps> = ({
     window.addEventListener('keydown', handleQuickSkip, { once: true });
 
     return () => {
+      document.body.style.overflow = originalOverflow;
       clearTimeout(timer1);
       clearTimeout(timer2);
       clearTimeout(timer3);
@@ -49,7 +56,7 @@ export const LoadingExperience: React.FC<LoadingExperienceProps> = ({
   }, []);
 
   return (
-    <AnimatePresence>
+    <AnimatePresence onExitComplete={finish}>
       {step < 2 ? (
         <motion.div
           key="loader-overlay"
@@ -142,7 +149,7 @@ export const LoadingExperience: React.FC<LoadingExperienceProps> = ({
 
           {/* Skip prompt on click */}
           <button
-            onClick={onComplete}
+            onClick={finish}
             className="absolute bottom-10 font-mono text-[10px] tracking-widest text-white/30 hover:text-white/80 transition-colors cursor-pointer uppercase"
           >
             Press anywhere or click to enter ↵

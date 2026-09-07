@@ -131,28 +131,33 @@ export const ExperienceManagement: React.FC<ExperienceManagementProps> = ({
         .map((t) => t.trim())
         .filter(Boolean);
 
+      const trimmedOrgSubtext = formOrgSubtext.trim();
+      const trimmedLocation = formLocation.trim();
+      const trimmedDesc = formDescription.trim();
+
       const expData: AdminExperience = {
         id: editingExp ? editingExp.id : '',
         role: formRole.trim(),
         organization: formOrganization.trim(),
-        organizationSubtext: formOrgSubtext.trim() || undefined,
         startDate: formStartDate.trim(),
         endDate: formCurrent ? 'Present' : formEndDate.trim(),
         current: formCurrent,
-        location: formLocation.trim(),
-        description: formDescription.trim() || cleanResponsibilities.join('\n\n'),
+        location: trimmedLocation || 'Remote / India',
+        description: trimmedDesc || (cleanResponsibilities.length ? cleanResponsibilities.join('\n\n') : 'Experience contribution and key responsibilities.'),
         responsibilities: cleanResponsibilities,
         tags: tagsArray.length ? tagsArray : ['Design'],
         order: Number(formOrder) || 1,
-        createdAt: editingExp?.createdAt,
+        ...(trimmedOrgSubtext ? { organizationSubtext: trimmedOrgSubtext } : {}),
+        ...(editingExp?.createdAt ? { createdAt: editingExp.createdAt } : {}),
       };
 
       await onSave(expData);
       showToast(editingExp ? 'Experience record updated.' : 'New experience added.');
       setIsFormOpen(false);
-    } catch (err) {
-      console.error(err);
-      setFormError('Failed to save experience entry.');
+    } catch (err: any) {
+      console.error('[ExperienceManagement handleSubmit ERROR]:', err);
+      const errDetail = err?.code ? `[${err.code}] ${err.message}` : (err?.message || 'Failed to save experience entry.');
+      setFormError(errDetail);
     } finally {
       setIsSaving(false);
     }

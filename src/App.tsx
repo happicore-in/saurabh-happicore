@@ -18,6 +18,7 @@ import { ContactPage } from './components/contact/ContactPage';
 import { AdminDashboard } from './components/admin/AdminDashboard';
 import { AdminLoginPage } from './components/admin/AdminLoginPage';
 import { AdminAuthProvider, useAdminAuth } from './context/AdminAuthContext';
+import { LoadingExperience } from './components/ui/LoadingExperience';
 import { WorkCategory } from './types';
 import { Info } from 'lucide-react';
 
@@ -50,6 +51,15 @@ function AppContent() {
 
   // Part 10: ADMIN DASHBOARD (protected separate interface)
   const [currentPage, setCurrentPage] = useState<'contact' | 'about' | 'experience' | 'graphic' | 'video' | 'web' | 'work' | 'home' | 'admin'>(getInitialPage);
+  const [showLoadingExperience, setShowLoadingExperience] = useState<boolean>(() => {
+    if (typeof window !== 'undefined') {
+      const path = window.location.pathname.toLowerCase();
+      if (path === '/admin' || path === '/admin/login') {
+        return false;
+      }
+    }
+    return true;
+  });
   const [workFilter, setWorkFilter] = useState<WorkCategory>('all');
   const [activeSection, setActiveSection] = useState(getInitialPage() === 'admin' ? 'home' : getInitialPage());
   const [selectedProjectId, setSelectedProjectId] = useState<string | null>(null);
@@ -206,20 +216,27 @@ function AppContent() {
   }
 
   return (
-    <Layout
-      activeSection={
-        currentPage === 'home'
-          ? activeSection
-          : currentPage === 'contact'
-          ? 'contact'
-          : currentPage === 'about'
-          ? 'about'
-          : currentPage === 'experience'
-          ? 'experience'
-          : 'work'
-      }
-      onNavigate={handleNavigate}
-    >
+    <>
+      {showLoadingExperience && (
+        <LoadingExperience
+          onComplete={() => setShowLoadingExperience(false)}
+          onLoadingComplete={() => setShowLoadingExperience(false)}
+        />
+      )}
+      <Layout
+        activeSection={
+          currentPage === 'home'
+            ? activeSection
+            : currentPage === 'contact'
+            ? 'contact'
+            : currentPage === 'about'
+            ? 'about'
+            : currentPage === 'experience'
+            ? 'experience'
+            : 'work'
+        }
+        onNavigate={handleNavigate}
+      >
       <div className="w-full bg-[#000000] text-[#F2F4F7]">
         {/* ========================================================
             CONDITIONALLY RENDER CONTACT (PART 9), ABOUT (PART 8), EXPERIENCE (PART 7), GRAPHIC (PART 6), VIDEO (PART 5), WEB (PART 4), WORK (PART 3), HOME (PART 2)
@@ -335,6 +352,7 @@ function AppContent() {
         )}
       </div>
     </Layout>
+    </>
   );
 }
 

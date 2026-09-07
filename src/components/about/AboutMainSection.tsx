@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Award, CheckCircle2, GraduationCap, MapPin, Sparkles } from 'lucide-react';
 import { ABOUT_PROFILE } from '../../data/aboutData';
-import { getAboutData, getSiteSettings } from '../../services/portfolioDataService';
+import { getAboutData, getSiteSettings, resolveAuthoritativeProfileImage } from '../../services/portfolioDataService';
 import { AdminAboutData, AdminSiteSettings } from '../../types/admin';
 
 export const AboutMainSection: React.FC = () => {
@@ -42,12 +42,7 @@ export const AboutMainSection: React.FC = () => {
     };
   }, []);
 
-  const imageSrc =
-    about?.profileImage?.trim() ||
-    settings?.about?.profileImage?.trim() ||
-    settings?.home?.profileImage?.trim() ||
-    (settings as any)?.homeContent?.profileImage?.trim() ||
-    '';
+  const imageSrc = resolveAuthoritativeProfileImage(about, settings);
   const name = settings?.siteName || 'Saurabh';
   const location = settings?.contactDetails?.location || about?.location || ABOUT_PROFILE.location;
   const city = location.split(',')[0] || 'Mau';

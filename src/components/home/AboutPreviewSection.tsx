@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { ArrowRight, GraduationCap, MapPin, Sparkles } from 'lucide-react';
 import { IDENTITY } from '../../design-system/tokens';
-import { getAboutData, getSiteSettings } from '../../services/portfolioDataService';
+import { getAboutData, getSiteSettings, resolveAuthoritativeProfileImage } from '../../services/portfolioDataService';
 import { AdminAboutData, AdminSiteSettings } from '../../types/admin';
 
 interface AboutPreviewSectionProps {
@@ -50,11 +50,7 @@ export const AboutPreviewSection: React.FC<AboutPreviewSectionProps> = ({ onMore
     };
   }, []);
 
-  const profileImg =
-    about?.profileImage?.trim() ||
-    settings?.home?.profileImage?.trim() ||
-    (settings as any)?.homeContent?.profileImage?.trim() ||
-    '';
+  const profileImg = resolveAuthoritativeProfileImage(about, settings);
   const quoteTitle = about?.name || 'Saurabh';
   const roleText = about?.tagline || 'Video Editor, Graphic Designer and Web Developer';
   const institution = about?.education?.institution || 'IIT Madras';

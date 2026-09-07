@@ -30,13 +30,14 @@ const AdminAuthContext = createContext<AdminAuthContextType | undefined>(
  * ADMIN CONFIGURATION
  * ============================================================
  *
- * ONLY THIS EMAIL IS ALLOWED TO ACCESS THE ADMIN PANEL.
- *
- * Firebase Authentication still verifies the actual password.
- * This email check only decides whether the authenticated user
- * is allowed to enter the admin dashboard.
+ * ONLY THESE AUTHORIZED EMAILS ARE ALLOWED TO ACCESS THE ADMIN PANEL.
+ * Matches firestore.rules isAdmin() validation.
  */
-const ADMIN_EMAIL = 'happicore.in@gmail.com';
+export const ADMIN_AUTHORIZED_EMAILS: readonly string[] = [
+  'happicore.in@gmail.com',
+  'saurabh22102@gmail.com',
+  'saurabhcore31@gmail.com',
+] as const;
 
 const ADMIN_STORAGE_KEY = 'saurabh_admin_session';
 
@@ -56,7 +57,7 @@ const isAuthorizedAdmin = (firebaseUser: User | null): boolean => {
     return false;
   }
 
-  return normalizeEmail(firebaseUser.email) === ADMIN_EMAIL;
+  return ADMIN_AUTHORIZED_EMAILS.includes(normalizeEmail(firebaseUser.email));
 };
 
 export function AdminAuthProvider({
@@ -124,6 +125,12 @@ export function AdminAuthProvider({
         /*
          * Authorized admin.
          */
+        console.log('[AdminAuthContext] Verified Firebase Auth User:', {
+          uid: currentUser.uid,
+          email: currentUser.email,
+          emailVerified: currentUser.emailVerified,
+        });
+
         setUser(currentUser);
 
         localStorage.setItem(
@@ -179,10 +186,10 @@ export function AdminAuthProvider({
     const normalizedEmail = normalizeEmail(email);
 
     /*
-     * First make sure the entered email is the authorized
-     * administrator email.
+     * First make sure the entered email is in the authorized
+     * administrator emails list.
      */
-    if (normalizedEmail !== ADMIN_EMAIL) {
+    if (!ADMIN_AUTHORIZED_EMAILS.includes(normalizedEmail)) {
       setError('This email is not authorized to access the admin panel.');
       return false;
     }
@@ -316,7 +323,7 @@ export function AdminAuthProvider({
         localStorage.removeItem(ADMIN_STORAGE_KEY);
 
         setError(
-          `Only ${ADMIN_EMAIL} is authorized to access the admin panel.`
+          'This Google account is not authorized to access the admin panel.'
         );
 
         return false;
@@ -395,7 +402,7 @@ export function AdminAuthProvider({
    * Firebase session belongs to the authorized admin.
    */
   const signInAsAdmin = async (
-    customEmail: string = ADMIN_EMAIL
+    customEmail: string = ADMIN_AUTHORIZED_EMAILS[0]
   ): Promise<boolean> => {
     setError(null);
     setAuthNotice(null);
@@ -403,9 +410,9 @@ export function AdminAuthProvider({
     const normalizedEmail = normalizeEmail(customEmail);
 
     /*
-     * Reject every email except the authorized admin email.
+     * Reject every email except the authorized admin emails.
      */
-    if (normalizedEmail !== ADMIN_EMAIL) {
+    if (!ADMIN_AUTHORIZED_EMAILS.includes(normalizedEmail)) {
       setError('This email is not authorized to access the admin panel.');
       return false;
     }

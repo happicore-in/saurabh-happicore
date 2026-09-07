@@ -118,28 +118,33 @@ export const VideoManagement: React.FC<VideoManagementProps> = ({
         .map((t) => t.trim())
         .filter(Boolean);
 
+      const trimmedDuration = formDuration.trim();
+      const trimmedWherePosted = formWherePosted.trim();
+      const trimmedSocialMediaLink = formSocialMediaLink.trim();
+
       const videoData: AdminVideoProject = {
         id: editingVideo ? editingVideo.id : '',
         title: formTitle.trim(),
         description: formDescription.trim(),
         thumbnail: formThumbnail.trim(),
-        duration: formDuration.trim() || undefined,
         googleDriveUrl: formGoogleDriveUrl.trim(),
-        wherePosted: formWherePosted.trim() || undefined,
-        socialMediaLink: formSocialMediaLink.trim() || undefined,
         tools: toolsArray.length ? toolsArray : ['CapCut PC'],
         featured: formFeatured,
         order: Number(formOrder) || 1,
         aspectRatio: formAspectRatio,
-        createdAt: editingVideo?.createdAt,
+        ...(trimmedDuration ? { duration: trimmedDuration } : {}),
+        ...(trimmedWherePosted ? { wherePosted: trimmedWherePosted } : {}),
+        ...(trimmedSocialMediaLink ? { socialMediaLink: trimmedSocialMediaLink } : {}),
+        ...(editingVideo?.createdAt ? { createdAt: editingVideo.createdAt } : {}),
       };
 
       await onSave(videoData);
       showToast(editingVideo ? 'Video work updated.' : 'New video project added.');
       setIsFormOpen(false);
-    } catch (err) {
-      console.error(err);
-      setFormError('Failed to save video project. Please try again.');
+    } catch (err: any) {
+      console.error('[VideoManagement handleSubmit ERROR]:', err);
+      const errDetail = err?.code ? `[${err.code}] ${err.message}` : (err?.message || 'Failed to save video project. Please try again.');
+      setFormError(errDetail);
     } finally {
       setIsSaving(false);
     }

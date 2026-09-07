@@ -103,26 +103,30 @@ export const WebManagement: React.FC<WebManagementProps> = ({
         .map((t) => t.trim())
         .filter(Boolean);
 
+      const trimmedLiveUrl = formLiveUrl.trim();
+      const trimmedGithubUrl = formGithubUrl.trim();
+
       const projectData: AdminWebProject = {
         id: editingProject ? editingProject.id : '',
         title: formTitle.trim(),
         description: formDescription.trim(),
         image: formImage.trim(),
-        liveUrl: formLiveUrl.trim() || undefined,
-        githubUrl: formGithubUrl.trim() || undefined,
         technologies: techArray.length ? techArray : ['Web'],
         featured: formFeatured,
         order: Number(formOrder) || 1,
         category: formCategory,
-        createdAt: editingProject?.createdAt,
+        ...(trimmedLiveUrl ? { liveUrl: trimmedLiveUrl } : {}),
+        ...(trimmedGithubUrl ? { githubUrl: trimmedGithubUrl } : {}),
+        ...(editingProject?.createdAt ? { createdAt: editingProject.createdAt } : {}),
       };
 
       await onSave(projectData);
       showToast(editingProject ? 'Web project updated successfully.' : 'New web project created.');
       setIsFormOpen(false);
-    } catch (err) {
-      console.error(err);
-      setFormError('Something went wrong while saving. Please try again.');
+    } catch (err: any) {
+      console.error('[WebManagement handleSubmit ERROR]:', err);
+      const errDetail = err?.code ? `[${err.code}] ${err.message}` : (err?.message || 'Something went wrong while saving. Please try again.');
+      setFormError(errDetail);
     } finally {
       setIsSaving(false);
     }

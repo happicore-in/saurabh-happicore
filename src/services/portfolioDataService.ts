@@ -28,6 +28,39 @@ import {
 } from '../types';
 import { deleteCloudinaryAsset, setMemoryCloudinaryConfig } from './cloudinaryService';
 
+/**
+ * Recursively removes JavaScript undefined values from Firestore payloads
+ * while preserving null, false, 0, empty strings, arrays, Firestore Timestamps, Dates, and valid nested objects.
+ */
+export function sanitizeFirestoreData<T>(data: T): T {
+  if (data === null || data === undefined) {
+    return data;
+  }
+
+  if (Array.isArray(data)) {
+    return data
+      .filter((item) => item !== undefined)
+      .map((item) => sanitizeFirestoreData(item)) as unknown as T;
+  }
+
+  if (typeof data === 'object') {
+    // Preserve Firestore Timestamps, FieldValues, or JS Date objects
+    if (data instanceof Date || typeof (data as any).toMillis === 'function') {
+      return data;
+    }
+
+    const cleaned: Record<string, any> = {};
+    for (const [key, value] of Object.entries(data)) {
+      if (value !== undefined) {
+        cleaned[key] = sanitizeFirestoreData(value);
+      }
+    }
+    return cleaned as T;
+  }
+
+  return data;
+}
+
 // ========================================================
 // Baseline Static Fallback Constants
 // (Used ONLY for explicit database seeding or emergency offline zero-cache fallback)
@@ -411,8 +444,21 @@ export async function saveWebProject(project: AdminWebProject): Promise<AdminWeb
     createdAt: project.createdAt || nowIso,
   };
 
+  const sanitized = sanitizeFirestoreData(data);
+
   // Authoritative write to Firestore FIRST. If this throws, nothing is mutated.
-  await setDoc(doc(db, 'webProjects', id), data);
+  try {
+    await setDoc(doc(db, 'webProjects', id), sanitized);
+  } catch (err: any) {
+    console.error('[portfolioDataService.saveWebProject ERROR]', {
+      code: err?.code,
+      message: err?.message,
+      name: err?.name,
+      id,
+      dataKeys: Object.keys(sanitized),
+    });
+    throw err;
+  }
 
   // Update in-memory runtime cache only
   const currentList = memoryCache.web || [];
@@ -499,7 +545,20 @@ export async function saveVideoProject(project: AdminVideoProject): Promise<Admi
     createdAt: project.createdAt || nowIso,
   };
 
-  await setDoc(doc(db, 'videoProjects', id), data);
+  const sanitized = sanitizeFirestoreData(data);
+
+  try {
+    await setDoc(doc(db, 'videoProjects', id), sanitized);
+  } catch (err: any) {
+    console.error('[portfolioDataService.saveVideoProject ERROR]', {
+      code: err?.code,
+      message: err?.message,
+      name: err?.name,
+      id,
+      dataKeys: Object.keys(sanitized),
+    });
+    throw err;
+  }
 
   const currentList = memoryCache.video || [];
   const exists = currentList.some((p) => p.id === id);
@@ -581,7 +640,20 @@ export async function saveGraphicProject(project: AdminGraphicProject): Promise<
     createdAt: project.createdAt || nowIso,
   };
 
-  await setDoc(doc(db, 'graphicProjects', id), data);
+  const sanitized = sanitizeFirestoreData(data);
+
+  try {
+    await setDoc(doc(db, 'graphicProjects', id), sanitized);
+  } catch (err: any) {
+    console.error('[portfolioDataService.saveGraphicProject ERROR]', {
+      code: err?.code,
+      message: err?.message,
+      name: err?.name,
+      id,
+      dataKeys: Object.keys(sanitized),
+    });
+    throw err;
+  }
 
   const currentList = memoryCache.graphic || [];
   const exists = currentList.some((p) => p.id === id);
@@ -663,7 +735,20 @@ export async function saveExperience(exp: AdminExperience): Promise<AdminExperie
     createdAt: exp.createdAt || nowIso,
   };
 
-  await setDoc(doc(db, 'experiences', id), data);
+  const sanitized = sanitizeFirestoreData(data);
+
+  try {
+    await setDoc(doc(db, 'experiences', id), sanitized);
+  } catch (err: any) {
+    console.error('[portfolioDataService.saveExperience ERROR]', {
+      code: err?.code,
+      message: err?.message,
+      name: err?.name,
+      id,
+      dataKeys: Object.keys(sanitized),
+    });
+    throw err;
+  }
 
   const currentList = memoryCache.experience || [];
   const exists = currentList.some((e) => e.id === id);
@@ -696,7 +781,7 @@ export async function reorderExperiences(items: AdminExperience[]): Promise<Admi
   }));
 
   for (const item of updatedItems) {
-    await setDoc(doc(db, 'experiences', item.id), item);
+    await setDoc(doc(db, 'experiences', item.id), sanitizeFirestoreData(item));
   }
 
   memoryCache.experience = updatedItems;
@@ -742,10 +827,50 @@ export async function getAboutData(forceRefresh = false): Promise<AdminAboutData
   }
 }
 
+/**
+ * Resolves the single authoritative profile image URL.
+ * Priority:
+ * 1. aboutData/main.profileImage (Authoritative Source of Truth)
+ * 2. siteSettings.home.profileImage / homeContent.profileImage (Legacy backward-compatibility fallback)
+ */
+export function resolveAuthoritativeProfileImage(
+  about: AdminAboutData | null | undefined,
+  settings: AdminSiteSettings | null | undefined
+): string {
+  const authoritative = about?.profileImage?.trim();
+  if (authoritative) {
+    return authoritative;
+  }
+
+  const legacy =
+    settings?.home?.profileImage?.trim() ||
+    (settings as any)?.homeContent?.profileImage?.trim() ||
+    settings?.about?.profileImage?.trim() ||
+    '';
+  return legacy;
+}
+
 export async function saveAboutData(data: AdminAboutData): Promise<AdminAboutData> {
-  await setDoc(doc(db, 'aboutData', 'main'), data);
+  const sanitized = sanitizeFirestoreData(data);
+  await setDoc(doc(db, 'aboutData', 'main'), sanitized);
 
   memoryCache.about = data;
+
+  // Keep siteSettings.home.profileImage synced for backward compatibility
+  try {
+    const currentSettings = await getSiteSettings();
+    if (currentSettings?.home && currentSettings.home.profileImage !== data.profileImage) {
+      currentSettings.home.profileImage = data.profileImage;
+      if (currentSettings.homeContent) {
+        currentSettings.homeContent.profileImage = data.profileImage;
+      }
+      await setDoc(doc(db, 'siteSettings', 'global'), sanitizeFirestoreData(currentSettings));
+      memoryCache.settings = currentSettings;
+    }
+  } catch (syncErr) {
+    console.warn('[Profile Image Sync] siteSettings backward-compatibility notice:', syncErr);
+  }
+
   window.dispatchEvent(new CustomEvent('portfolio_data_updated', { detail: { type: 'about', item: data } }));
   return data;
 }
@@ -805,7 +930,22 @@ export async function saveSiteSettings(settings: Partial<AdminSiteSettings>): Pr
     updatedAt: new Date().toISOString(),
   };
 
-  await setDoc(doc(db, 'siteSettings', 'global'), updated);
+  const sanitized = sanitizeFirestoreData(updated);
+  await setDoc(doc(db, 'siteSettings', 'global'), sanitized);
+
+  // If a profileImage is passed in site settings, update the authoritative aboutData/main.profileImage
+  if (mergedHome.profileImage) {
+    try {
+      const currentAbout = await getAboutData();
+      if (currentAbout && currentAbout.profileImage !== mergedHome.profileImage) {
+        currentAbout.profileImage = mergedHome.profileImage;
+        await setDoc(doc(db, 'aboutData', 'main'), sanitizeFirestoreData(currentAbout));
+        memoryCache.about = currentAbout;
+      }
+    } catch (syncErr) {
+      console.warn('[Profile Image Sync] aboutData authoritative sync notice:', syncErr);
+    }
+  }
 
   if (updated.cloudinary) {
     setMemoryCloudinaryConfig(updated.cloudinary);

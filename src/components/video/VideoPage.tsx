@@ -1,9 +1,5 @@
 import React, { useState, useEffect } from 'react';
 import { VideoFilterType, VideoProjectItem } from '../../types';
-import {
-  FEATURED_VIDEO_PROJECT,
-  SELECTED_VIDEO_PROJECTS,
-} from '../../data/videoProjects';
 import { getPublicVideoProjects } from '../../services/portfolioDataService';
 import { VideoHero } from './VideoHero';
 import { FeaturedVideo } from './FeaturedVideo';

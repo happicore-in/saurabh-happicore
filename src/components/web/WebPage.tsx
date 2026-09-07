@@ -1,9 +1,5 @@
 import React, { useState, useEffect } from 'react';
 import { WebFilterType, WebProjectItem } from '../../types';
-import {
-  FLAGSHIP_WEB_PROJECT,
-  SELECTED_WEB_PROJECTS,
-} from '../../data/webProjects';
 import { getPublicWebProjects } from '../../services/portfolioDataService';
 import { WebHero } from './WebHero';
 import { FeaturedWebProject } from './FeaturedWebProject';

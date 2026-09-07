@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { ArrowRight, ArrowUpRight, Compass, MapPin } from 'lucide-react';
 import { IDENTITY } from '../../design-system/tokens';
-import { getSiteSettings, getAboutData } from '../../services/portfolioDataService';
+import { getSiteSettings, getAboutData, resolveAuthoritativeProfileImage } from '../../services/portfolioDataService';
 import { AdminSiteSettings, AdminAboutData } from '../../types/admin';
 
 interface HeroSectionProps {
@@ -66,11 +66,7 @@ export const HeroSection: React.FC<HeroSectionProps> = ({
     settings?.contactDetails?.location ||
     'MAU, UP, INDIA';
 
-  const profileImageUrl =
-    settings?.home?.profileImage?.trim() ||
-    (settings as any)?.homeContent?.profileImage?.trim() ||
-    about?.profileImage?.trim() ||
-    '';
+  const profileImageUrl = resolveAuthoritativeProfileImage(about, settings);
 
   const siteDisplayName =
     settings?.siteName ? settings.siteName.split('//')[0].trim() : 'SAURABH';

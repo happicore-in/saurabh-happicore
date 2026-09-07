@@ -109,27 +109,32 @@ export const GraphicManagement: React.FC<GraphicManagementProps> = ({
         .map((t) => t.trim())
         .filter(Boolean);
 
+      const trimmedWherePosted = formWherePosted.trim();
+      const trimmedSocialMediaLink = formSocialMediaLink.trim();
+      const trimmedBadgeLabel = formBadgeLabel.trim();
+
       const graphicData: AdminGraphicProject = {
         id: editingGraphic ? editingGraphic.id : '',
         title: formTitle.trim(),
         description: formDescription.trim(),
         image: formImage.trim(),
-        wherePosted: formWherePosted.trim() || undefined,
-        socialMediaLink: formSocialMediaLink.trim() || undefined,
         tools: toolsArray.length ? toolsArray : ['Adobe Photoshop', 'Illustrator'],
         featured: formFeatured,
         order: Number(formOrder) || 1,
         category: formCategory,
-        badgeLabel: formBadgeLabel.trim() || undefined,
-        createdAt: editingGraphic?.createdAt,
+        ...(trimmedWherePosted ? { wherePosted: trimmedWherePosted } : {}),
+        ...(trimmedSocialMediaLink ? { socialMediaLink: trimmedSocialMediaLink } : {}),
+        ...(trimmedBadgeLabel ? { badgeLabel: trimmedBadgeLabel } : {}),
+        ...(editingGraphic?.createdAt ? { createdAt: editingGraphic.createdAt } : {}),
       };
 
       await onSave(graphicData);
       showToast(editingGraphic ? 'Graphic work updated.' : 'New graphic work created.');
       setIsFormOpen(false);
-    } catch (err) {
-      console.error(err);
-      setFormError('Failed to save graphic design item.');
+    } catch (err: any) {
+      console.error('[GraphicManagement handleSubmit ERROR]:', err);
+      const errDetail = err?.code ? `[${err.code}] ${err.message}` : (err?.message || 'Failed to save graphic design item.');
+      setFormError(errDetail);
     } finally {
       setIsSaving(false);
     }
