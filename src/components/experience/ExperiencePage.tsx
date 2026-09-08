@@ -3,7 +3,6 @@ import { ExperienceHero } from './ExperienceHero';
 import { ExperienceSummaryRow } from './ExperienceSummaryRow';
 import { ExecutiveSidebar } from './ExecutiveSidebar';
 import { ExperienceTimeline } from './ExperienceTimeline';
-import { ExperienceSkillsAndCredentials } from './ExperienceSkillsAndCredentials';
 import { ExperienceCTA } from './ExperienceCTA';
 
 interface ExperiencePageProps {
@@ -48,10 +47,7 @@ export const ExperiencePage: React.FC<ExperiencePageProps> = ({
           </div>
         </div>
 
-        {/* 4. KEY SKILLS, EDUCATION & CERTIFICATIONS */}
-        <ExperienceSkillsAndCredentials />
-
-        {/* 5. PHILOSOPHICAL HIGHLIGHT & COLLABORATION CTA */}
+        {/* 4. PHILOSOPHICAL HIGHLIGHT & COLLABORATION CTA */}
         <ExperienceCTA onContactClick={onContactClick} />
       </main>
     </div>

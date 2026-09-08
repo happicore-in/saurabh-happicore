@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { AdminAboutData } from '../../types/admin';
+import { AdminAboutData, AdminCertification } from '../../types/admin';
 import { CloudinaryImageUploader } from './CloudinaryImageUploader';
 import {
   User,
@@ -11,6 +11,9 @@ import {
   Plus,
   X,
   Layers,
+  Award,
+  ShieldCheck,
+  Trash2,
 } from 'lucide-react';
 
 interface AboutManagementProps {
@@ -318,6 +321,82 @@ export const AboutManagement: React.FC<AboutManagementProps> = ({
               className="w-full bg-[#050608] border border-[#22252A] focus:border-[#F5A623] rounded-lg py-2 px-3 text-xs text-[#F2F4F7] font-mono focus:outline-none"
             />
           </div>
+
+          {/* Curriculum Progress Metrics */}
+          <div className="pt-3 border-t border-[#1C1F26] space-y-3">
+            <div className="flex items-center justify-between">
+              <label className="font-mono text-xs text-[#8FB8E8] tracking-wider uppercase block font-bold">
+                CURRICULUM METRICS & PROGRESS BARS
+              </label>
+            </div>
+            <div className="space-y-2">
+              {(formData.education.curriculumMetrics || []).map((m, idx) => (
+                <div key={idx} className="flex items-center gap-3 bg-[#06080B] p-2 rounded border border-[#1C1F26]">
+                  <input
+                    type="text"
+                    value={m.label}
+                    onChange={(e) => {
+                      const updated = [...(formData.education.curriculumMetrics || [])];
+                      updated[idx] = { ...updated[idx], label: e.target.value };
+                      setFormData({
+                        ...formData,
+                        education: { ...formData.education, curriculumMetrics: updated },
+                      });
+                    }}
+                    className="flex-1 bg-[#050608] border border-[#22252A] rounded px-2.5 py-1 text-xs text-[#F2F4F7] font-mono focus:border-[#8FB8E8] focus:outline-none"
+                    placeholder="Metric Label"
+                  />
+                  <div className="flex items-center gap-1.5 w-24">
+                    <input
+                      type="number"
+                      min={0}
+                      max={100}
+                      value={m.percent}
+                      onChange={(e) => {
+                        const updated = [...(formData.education.curriculumMetrics || [])];
+                        updated[idx] = { ...updated[idx], percent: Number(e.target.value) };
+                        setFormData({
+                          ...formData,
+                          education: { ...formData.education, curriculumMetrics: updated },
+                        });
+                      }}
+                      className="w-16 bg-[#050608] border border-[#22252A] rounded px-2 py-1 text-xs text-[#F2F4F7] font-mono focus:border-[#8FB8E8] focus:outline-none text-right"
+                    />
+                    <span className="font-mono text-xs text-[#6F7682]">%</span>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const updated = (formData.education.curriculumMetrics || []).filter((_, i) => i !== idx);
+                      setFormData({
+                        ...formData,
+                        education: { ...formData.education, curriculumMetrics: updated },
+                      });
+                    }}
+                    className="p-1 text-[#6F7682] hover:text-[#FF4D4F] transition-colors"
+                  >
+                    <X className="w-3.5 h-3.5" />
+                  </button>
+                </div>
+              ))}
+              <button
+                type="button"
+                onClick={() => {
+                  const current = formData.education.curriculumMetrics || [];
+                  setFormData({
+                    ...formData,
+                    education: {
+                      ...formData.education,
+                      curriculumMetrics: [...current, { label: 'New Focus Area', percent: 80 }],
+                    },
+                  });
+                }}
+                className="text-xs font-mono text-[#8FB8E8] hover:text-[#A8CCFC] flex items-center gap-1.5 pt-1"
+              >
+                <Plus className="w-3.5 h-3.5" /> ADD METRIC
+              </button>
+            </div>
+          </div>
         </div>
 
         {/* Section 3: Tools Management (Live updates without source changes) */}
@@ -449,6 +528,270 @@ export const AboutManagement: React.FC<AboutManagementProps> = ({
                     }}
                     className="w-full bg-[#050608] border border-[#22252A] rounded px-3 py-1.5 text-xs text-[#F2F4F7] font-mono focus:border-[#8FB8E8] focus:outline-none resize-none"
                   />
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Section 5: Certifications & Achievements */}
+        <div className="bg-[#0A0C0F] border border-[#22252A] rounded-xl p-6 space-y-5">
+          <div className="flex items-center justify-between border-b border-[#1C1F26] pb-3">
+            <div className="flex items-center gap-2">
+              <Award className="w-4 h-4 text-[#8FB8E8]" />
+              <h2 className="font-mono text-sm font-bold text-[#F2F4F7] uppercase tracking-wider">
+                CERTIFICATIONS &amp; ACHIEVEMENTS ({(formData.certifications || []).length})
+              </h2>
+            </div>
+            <button
+              type="button"
+              onClick={() => {
+                const current = formData.certifications || [];
+                const newId = `cert-${Date.now()}`;
+                setFormData({
+                  ...formData,
+                  certifications: [
+                    ...current,
+                    {
+                      id: newId,
+                      title: 'New Certification / Achievement',
+                      category: 'VISUAL DESIGN',
+                      type: 'Certification',
+                      issuer: 'Issuing Organization',
+                      description: 'Comprehensive credential covering modern digital production workflows and technical standards.',
+                      period: new Date().getFullYear().toString(),
+                      credentialId: '',
+                      credentialUrl: '',
+                      status: 'Verified',
+                      statusType: 'verified',
+                      verified: true,
+                      isPublished: true,
+                      order: current.length + 1,
+                    },
+                  ],
+                });
+              }}
+              className="text-xs font-mono text-[#8FB8E8] hover:text-[#A8CCFC] flex items-center gap-1.5 cursor-pointer"
+            >
+              <Plus className="w-3.5 h-3.5" /> ADD CERTIFICATION
+            </button>
+          </div>
+
+          <div className="space-y-4">
+            {(formData.certifications || []).map((cert, index) => (
+              <div
+                key={cert.id || index}
+                className="bg-[#06080B] border border-[#22252A] p-4 rounded-lg space-y-3"
+              >
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <span className="font-mono text-[10px] uppercase tracking-wider text-[#A7ADB7]">
+                      CERTIFICATION #{index + 1}
+                    </span>
+                    {cert.category && (
+                      <span className="font-mono text-[9px] uppercase px-2 py-0.5 rounded bg-[#12151C] text-[#8FB8E8] border border-[#22252A]">
+                        {cert.category}
+                      </span>
+                    )}
+                  </div>
+                  <div className="flex items-center gap-3">
+                    <label className="flex items-center gap-1.5 font-mono text-[10px] text-[#A7ADB7] cursor-pointer">
+                      <input
+                        type="checkbox"
+                        checked={cert.verified}
+                        onChange={(e) => {
+                          const updated = [...(formData.certifications || [])];
+                          updated[index] = { ...updated[index], verified: e.target.checked };
+                          setFormData({ ...formData, certifications: updated });
+                        }}
+                        className="rounded bg-[#0A0C0F] border-[#22252A] text-[#8FB8E8]"
+                      />
+                      <span>VERIFIED BADGE</span>
+                    </label>
+
+                    <label className="flex items-center gap-1.5 font-mono text-[10px] text-[#A7ADB7] cursor-pointer">
+                      <input
+                        type="checkbox"
+                        checked={cert.isPublished !== false}
+                        onChange={(e) => {
+                          const updated = [...(formData.certifications || [])];
+                          updated[index] = { ...updated[index], isPublished: e.target.checked };
+                          setFormData({ ...formData, certifications: updated });
+                        }}
+                        className="rounded bg-[#0A0C0F] border-[#22252A] text-[#8FB8E8]"
+                      />
+                      <span>PUBLISHED</span>
+                    </label>
+
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const updated = (formData.certifications || []).filter((_, i) => i !== index);
+                        setFormData({ ...formData, certifications: updated });
+                      }}
+                      className="p-1 text-[#6F7682] hover:text-[#FF4D4F] transition-colors cursor-pointer"
+                      title="Delete certification"
+                    >
+                      <Trash2 className="w-3.5 h-3.5" />
+                    </button>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                  <div className="sm:col-span-2 space-y-1">
+                    <label className="font-mono text-[10px] text-[#A7ADB7] uppercase">
+                      CERTIFICATION TITLE *
+                    </label>
+                    <input
+                      type="text"
+                      value={cert.title}
+                      onChange={(e) => {
+                        const updated = [...(formData.certifications || [])];
+                        updated[index] = { ...updated[index], title: e.target.value };
+                        setFormData({ ...formData, certifications: updated });
+                      }}
+                      className="w-full bg-[#050608] border border-[#22252A] rounded px-3 py-1.5 text-xs text-[#F2F4F7] font-mono focus:border-[#8FB8E8] focus:outline-none"
+                    />
+                  </div>
+
+                  <div className="space-y-1">
+                    <label className="font-mono text-[10px] text-[#A7ADB7] uppercase">
+                      CATEGORY / AREA
+                    </label>
+                    <input
+                      type="text"
+                      value={cert.category || ''}
+                      onChange={(e) => {
+                        const updated = [...(formData.certifications || [])];
+                        updated[index] = { ...updated[index], category: e.target.value };
+                        setFormData({ ...formData, certifications: updated });
+                      }}
+                      placeholder="e.g. VISUAL DESIGN"
+                      className="w-full bg-[#050608] border border-[#22252A] rounded px-3 py-1.5 text-xs text-[#F2F4F7] font-mono focus:border-[#8FB8E8] focus:outline-none"
+                    />
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                  <div className="space-y-1">
+                    <label className="font-mono text-[10px] text-[#A7ADB7] uppercase">
+                      ISSUING ORGANIZATION
+                    </label>
+                    <input
+                      type="text"
+                      value={cert.issuer}
+                      onChange={(e) => {
+                        const updated = [...(formData.certifications || [])];
+                        updated[index] = { ...updated[index], issuer: e.target.value };
+                        setFormData({ ...formData, certifications: updated });
+                      }}
+                      className="w-full bg-[#050608] border border-[#22252A] rounded px-3 py-1.5 text-xs text-[#F2F4F7] font-mono focus:border-[#8FB8E8] focus:outline-none"
+                    />
+                  </div>
+
+                  <div className="space-y-1">
+                    <label className="font-mono text-[10px] text-[#A7ADB7] uppercase">
+                      TYPE
+                    </label>
+                    <input
+                      type="text"
+                      value={cert.type || 'Certification'}
+                      onChange={(e) => {
+                        const updated = [...(formData.certifications || [])];
+                        updated[index] = { ...updated[index], type: e.target.value };
+                        setFormData({ ...formData, certifications: updated });
+                      }}
+                      placeholder="Certification / Achievement / Award"
+                      className="w-full bg-[#050608] border border-[#22252A] rounded px-3 py-1.5 text-xs text-[#F2F4F7] font-mono focus:border-[#8FB8E8] focus:outline-none"
+                    />
+                  </div>
+
+                  <div className="space-y-1">
+                    <label className="font-mono text-[10px] text-[#A7ADB7] uppercase">
+                      STATUS LABEL
+                    </label>
+                    <input
+                      type="text"
+                      value={cert.status || ''}
+                      onChange={(e) => {
+                        const updated = [...(formData.certifications || [])];
+                        updated[index] = { ...updated[index], status: e.target.value };
+                        setFormData({ ...formData, certifications: updated });
+                      }}
+                      placeholder="e.g. Verified, Participant, Honored"
+                      className="w-full bg-[#050608] border border-[#22252A] rounded px-3 py-1.5 text-xs text-[#F2F4F7] font-mono focus:border-[#8FB8E8] focus:outline-none"
+                    />
+                  </div>
+                </div>
+
+                <div className="space-y-1">
+                  <label className="font-mono text-[10px] text-[#A7ADB7] uppercase">
+                    DESCRIPTION (DISPLAYED ON CARD)
+                  </label>
+                  <textarea
+                    rows={2}
+                    value={cert.description || ''}
+                    onChange={(e) => {
+                      const updated = [...(formData.certifications || [])];
+                      updated[index] = { ...updated[index], description: e.target.value };
+                      setFormData({ ...formData, certifications: updated });
+                    }}
+                    placeholder="Brief summary of the credential..."
+                    className="w-full bg-[#050608] border border-[#22252A] rounded px-3 py-1.5 text-xs text-[#F2F4F7] font-mono focus:border-[#8FB8E8] focus:outline-none resize-none leading-relaxed"
+                  />
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                  <div className="space-y-1">
+                    <label className="font-mono text-[10px] text-[#A7ADB7] uppercase">
+                      PERIOD / YEAR
+                    </label>
+                    <input
+                      type="text"
+                      value={cert.period || ''}
+                      onChange={(e) => {
+                        const updated = [...(formData.certifications || [])];
+                        updated[index] = { ...updated[index], period: e.target.value };
+                        setFormData({ ...formData, certifications: updated });
+                      }}
+                      className="w-full bg-[#050608] border border-[#22252A] rounded px-3 py-1.5 text-xs text-[#F2F4F7] font-mono focus:border-[#8FB8E8] focus:outline-none"
+                      placeholder="e.g. 2025"
+                    />
+                  </div>
+
+                  <div className="space-y-1">
+                    <label className="font-mono text-[10px] text-[#A7ADB7] uppercase">
+                      CREDENTIAL ID
+                    </label>
+                    <input
+                      type="text"
+                      value={cert.credentialId || ''}
+                      onChange={(e) => {
+                        const updated = [...(formData.certifications || [])];
+                        updated[index] = { ...updated[index], credentialId: e.target.value };
+                        setFormData({ ...formData, certifications: updated });
+                      }}
+                      className="w-full bg-[#050608] border border-[#22252A] rounded px-3 py-1.5 text-xs text-[#F2F4F7] font-mono focus:border-[#8FB8E8] focus:outline-none"
+                      placeholder="e.g. CERT-01"
+                    />
+                  </div>
+
+                  <div className="space-y-1">
+                    <label className="font-mono text-[10px] text-[#A7ADB7] uppercase">
+                      CREDENTIAL URL
+                    </label>
+                    <input
+                      type="url"
+                      value={cert.credentialUrl || ''}
+                      onChange={(e) => {
+                        const updated = [...(formData.certifications || [])];
+                        updated[index] = { ...updated[index], credentialUrl: e.target.value };
+                        setFormData({ ...formData, certifications: updated });
+                      }}
+                      className="w-full bg-[#050608] border border-[#22252A] rounded px-3 py-1.5 text-xs text-[#F2F4F7] font-mono focus:border-[#8FB8E8] focus:outline-none"
+                      placeholder="https://..."
+                    />
+                  </div>
                 </div>
               </div>
             ))}

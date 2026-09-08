@@ -52,18 +52,30 @@ export const SiteSettingsManagement: React.FC<SiteSettingsManagementProps> = ({
       featuredWorkIds: workIds,
       featuredProjectIds: workIds,
     };
+    const defaultStats = [
+      { id: 'stat-roles', label: 'ROLES & CHAIRS', value: '3+', order: 1 },
+      { id: 'stat-campaigns', label: 'CAMPAIGNS', value: '6+', order: 2 },
+      { id: 'stat-affiliation', label: 'AFFILIATION', value: 'IIT Madras BS', order: 3 },
+      { id: 'stat-velocity', label: 'OUTPUT VELOCITY', value: '99.4% SLA', order: 4 },
+    ];
     return {
       ...settings,
+      siteTitle: settings.siteTitle || settings.siteName || 'SAURABH // CREATIVE MULTIDISCIPLINARY',
+      metaDescription: settings.metaDescription || 'Multidisciplinary portfolio of Saurabh — Video Editor, Graphic Designer & Web Developer.',
       logoMark: settings.logoMark || (settings as any).logoText || 'S // M',
       logoText: (settings as any).logoText || settings.logoMark || 'S // M',
-      footerText: (settings as any).footerText || '© 2026 SAURABH // HAPPICORE. ALL RIGHTS RESERVED.',
+      footerText: (settings as any).footerText || settings.footerCopyright || '© 2026 SAURABH // HAPPICORE. ALL RIGHTS RESERVED.',
+      footerCopyright: settings.footerCopyright || (settings as any).footerText || '© 2026 SAURABH // HAPPICORE. ALL RIGHTS RESERVED.',
+      experienceSummaryStats: settings.experienceSummaryStats && settings.experienceSummaryStats.length > 0
+        ? settings.experienceSummaryStats
+        : defaultStats,
       home: mergedHome,
       homeContent: mergedHome,
     };
   });
   const [isSaving, setIsSaving] = useState(false);
   const [activeSubTab, setActiveSubTab] = useState<
-    'general' | 'happicore' | 'contact' | 'availability' | 'home' | 'cloudinary'
+    'general' | 'experienceStats' | 'happicore' | 'contact' | 'availability' | 'home' | 'cloudinary'
   >('general');
 
   const handleSave = async (e: React.FormEvent) => {
@@ -81,6 +93,10 @@ export const SiteSettingsManagement: React.FC<SiteSettingsManagementProps> = ({
       };
       const cleanedData: AdminSiteSettings = {
         ...formData,
+        siteTitle: formData.siteTitle || formData.siteName,
+        metaDescription: formData.metaDescription,
+        footerCopyright: formData.footerCopyright || formData.footerText,
+        experienceSummaryStats: formData.experienceSummaryStats,
         logoMark: formData.logoMark || formData.logoText || 'S // M',
         home: homeData,
       };
@@ -155,6 +171,7 @@ export const SiteSettingsManagement: React.FC<SiteSettingsManagementProps> = ({
       <div className="flex flex-wrap gap-2 border-b border-[#1C1F26] pb-3 font-mono text-xs">
         {[
           { id: 'general', label: 'GENERAL & BRAND' },
+          { id: 'experienceStats', label: 'EXPERIENCE STATS' },
           { id: 'happicore', label: 'HAPPICORE AGENCY' },
           { id: 'contact', label: 'CONTACT & SOCIAL' },
           { id: 'availability', label: 'AVAILABILITY' },
@@ -181,7 +198,7 @@ export const SiteSettingsManagement: React.FC<SiteSettingsManagementProps> = ({
         {activeSubTab === 'general' && (
           <div className="bg-[#0A0C0F] border border-[#22252A] rounded-xl p-6 space-y-5">
             <h2 className="font-mono text-sm font-bold text-[#F2F4F7] uppercase tracking-wider flex items-center gap-2">
-              <Globe className="w-4 h-4 text-[#8FB8E8]" /> GENERAL BRAND IDENTITY
+              <Globe className="w-4 h-4 text-[#8FB8E8]" /> GENERAL BRAND IDENTITY & SEO
             </h2>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -210,16 +227,114 @@ export const SiteSettingsManagement: React.FC<SiteSettingsManagementProps> = ({
               </div>
             </div>
 
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div className="space-y-1.5">
+                <label className="font-mono text-xs text-[#A7ADB7] tracking-wider uppercase block">
+                  HTML PAGE TITLE (BROWSER TAB / SEO)
+                </label>
+                <input
+                  type="text"
+                  value={formData.siteTitle || ''}
+                  onChange={(e) => setFormData({ ...formData, siteTitle: e.target.value })}
+                  className="w-full bg-[#050608] border border-[#22252A] focus:border-[#8FB8E8] rounded-lg py-2 px-3 text-xs text-[#F2F4F7] font-mono focus:outline-none"
+                  placeholder="e.g. SAURABH // CREATIVE MULTIDISCIPLINARY"
+                />
+              </div>
+
+              <div className="space-y-1.5">
+                <label className="font-mono text-xs text-[#A7ADB7] tracking-wider uppercase block">
+                  FOOTER STATEMENT / COPYRIGHT
+                </label>
+                <input
+                  type="text"
+                  value={formData.footerText || formData.footerCopyright || ''}
+                  onChange={(e) =>
+                    setFormData({
+                      ...formData,
+                      footerText: e.target.value,
+                      footerCopyright: e.target.value,
+                    })
+                  }
+                  className="w-full bg-[#050608] border border-[#22252A] focus:border-[#8FB8E8] rounded-lg py-2 px-3 text-xs text-[#F2F4F7] font-mono focus:outline-none"
+                />
+              </div>
+            </div>
+
             <div className="space-y-1.5">
               <label className="font-mono text-xs text-[#A7ADB7] tracking-wider uppercase block">
-                FOOTER STATEMENT / COPYRIGHT
+                META DESCRIPTION (SEO / OPEN GRAPH)
               </label>
-              <input
-                type="text"
-                value={formData.footerText}
-                onChange={(e) => setFormData({ ...formData, footerText: e.target.value })}
-                className="w-full bg-[#050608] border border-[#22252A] focus:border-[#8FB8E8] rounded-lg py-2 px-3 text-xs text-[#F2F4F7] font-mono focus:outline-none"
+              <textarea
+                rows={2}
+                value={formData.metaDescription || ''}
+                onChange={(e) => setFormData({ ...formData, metaDescription: e.target.value })}
+                className="w-full bg-[#050608] border border-[#22252A] focus:border-[#8FB8E8] rounded-lg py-2 px-3 text-xs text-[#F2F4F7] font-mono focus:outline-none resize-none"
+                placeholder="Brief summary displayed in search engines and social shares"
               />
+            </div>
+          </div>
+        )}
+
+        {/* SUBTAB: Experience Summary Stats */}
+        {activeSubTab === 'experienceStats' && (
+          <div className="bg-[#0A0C0F] border border-[#22252A] rounded-xl p-6 space-y-5">
+            <div>
+              <h2 className="font-mono text-sm font-bold text-[#F5A623] uppercase tracking-wider flex items-center gap-2">
+                <Star className="w-4 h-4" /> EXPERIENCE SUMMARY METRICS (4 SLOTS)
+              </h2>
+              <p className="text-xs text-[#A7ADB7] font-sans mt-1">
+                These four metric cards are displayed horizontally across the Experience page hero header.
+              </p>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              {(formData.experienceSummaryStats || []).map((stat: any, idx: number) => (
+                <div
+                  key={stat.id || idx}
+                  className="bg-[#050608] border border-[#22252A] p-4 rounded-lg space-y-3"
+                >
+                  <div className="flex items-center justify-between">
+                    <span className="font-mono text-[10px] uppercase tracking-wider text-[#8FB8E8]">
+                      METRIC 0{idx + 1}
+                    </span>
+                    <span className="font-mono text-[9px] text-[#6F7682] uppercase border border-[#22252A] px-2 py-0.5 rounded">
+                      SLOT {idx + 1}
+                    </span>
+                  </div>
+
+                  <div className="space-y-1.5">
+                    <label className="font-mono text-[10px] text-[#A7ADB7] uppercase">
+                      LABEL (HEADER)
+                    </label>
+                    <input
+                      type="text"
+                      value={stat.label}
+                      onChange={(e) => {
+                        const updated = [...formData.experienceSummaryStats];
+                        updated[idx] = { ...updated[idx], label: e.target.value };
+                        setFormData({ ...formData, experienceSummaryStats: updated });
+                      }}
+                      className="w-full bg-[#0A0C0F] border border-[#22252A] focus:border-[#F5A623] rounded py-1.5 px-2.5 text-xs text-[#F2F4F7] font-mono focus:outline-none"
+                    />
+                  </div>
+
+                  <div className="space-y-1.5">
+                    <label className="font-mono text-[10px] text-[#A7ADB7] uppercase">
+                      VALUE / STAT
+                    </label>
+                    <input
+                      type="text"
+                      value={stat.value}
+                      onChange={(e) => {
+                        const updated = [...formData.experienceSummaryStats];
+                        updated[idx] = { ...updated[idx], value: e.target.value };
+                        setFormData({ ...formData, experienceSummaryStats: updated });
+                      }}
+                      className="w-full bg-[#0A0C0F] border border-[#22252A] focus:border-[#F5A623] rounded py-1.5 px-2.5 text-xs text-[#F2F4F7] font-mono focus:outline-none"
+                    />
+                  </div>
+                </div>
+              ))}
             </div>
           </div>
         )}

@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Award, CheckCircle2, GraduationCap, Trophy, Sparkles } from 'lucide-react';
-import { ABOUT_CERTIFICATIONS, ABOUT_PROFILE } from '../../data/aboutData';
-import { getAboutData } from '../../services/portfolioDataService';
+import { ABOUT_PROFILE } from '../../data/aboutData';
+import { getAboutData, BASELINE_ABOUT_CERTIFICATIONS } from '../../services/portfolioDataService';
 import { AdminAboutData } from '../../types/admin';
 
 export const AboutEducationAndCerts: React.FC = () => {
@@ -38,6 +38,17 @@ export const AboutEducationAndCerts: React.FC = () => {
     about?.focusAreas && about.focusAreas.length > 0
       ? about.focusAreas
       : ABOUT_PROFILE.education.focusAreas;
+
+  // Source certifications from Firestore aboutData/main document, falling back to BASELINE_ABOUT_CERTIFICATIONS
+  const rawCertifications =
+    about?.certifications && about.certifications.length > 0
+      ? about.certifications
+      : BASELINE_ABOUT_CERTIFICATIONS;
+
+  // Filter out unpublished items and sort by order
+  const publishedCertifications = rawCertifications
+    .filter((cert) => cert.isPublished !== false)
+    .sort((a, b) => (a.order || 0) - (b.order || 0));
 
   return (
     <div className="py-12 sm:py-16 border-b border-[#17191D] space-y-14">
@@ -156,50 +167,80 @@ export const AboutEducationAndCerts: React.FC = () => {
       {/* ========================================================
           2. RECOGNITION & SKILLS // CERTIFICATIONS & ACHIEVEMENTS
           ======================================================== */}
-      <div>
-        <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 mb-8">
-          <div>
-            <span className="font-mono text-[10px] sm:text-[11px] uppercase tracking-[0.16em] text-[#8FB8E8] block mb-2 font-semibold">
-              RECOGNITION &amp; SKILLS
-            </span>
-            <h2 className="font-heading font-extrabold text-2xl sm:text-3xl text-[#F2F4F7] uppercase tracking-tight">
-              CERTIFICATIONS &amp; ACHIEVEMENTS
-            </h2>
-          </div>
-          <span className="font-mono text-[11px] text-[#F5A623] uppercase tracking-wider flex items-center gap-1.5">
-            <Award className="w-3.5 h-3.5" />
-            <span>4 VERIFIED CREDENTIALS</span>
-          </span>
-        </div>
-
-        {/* 4 Cards Grid */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-5">
-          {ABOUT_CERTIFICATIONS.map((cert) => (
-            <div
-              key={cert.id}
-              className="p-5 sm:p-6 bg-[#080808] hover:bg-[#0B0C0E] border border-[#22252A] hover:border-[#343842] rounded-[8px] space-y-3 transition-colors"
-            >
-              <div className="flex items-center justify-between">
-                <span className="font-mono text-[9px] uppercase tracking-[0.14em] text-[#6F7682]">
-                  {cert.category}
-                </span>
-                <span className="flex items-center gap-1 font-mono text-[10px] text-[#8FB8E8] uppercase tracking-wider">
-                  <CheckCircle2 className="w-3 h-3 text-[#8FB8E8]" />
-                  <span>{cert.status}</span>
-                </span>
-              </div>
-
-              <h3 className="font-heading font-bold text-base text-[#F2F4F7] uppercase tracking-tight">
-                {cert.title}
-              </h3>
-
-              <p className="font-body text-xs text-[#A7ADB7] leading-relaxed">
-                {cert.description}
-              </p>
+      {publishedCertifications.length > 0 && (
+        <div>
+          <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 mb-8">
+            <div>
+              <span className="font-mono text-[10px] sm:text-[11px] uppercase tracking-[0.16em] text-[#8FB8E8] block mb-2 font-semibold">
+                RECOGNITION &amp; SKILLS
+              </span>
+              <h2 className="font-heading font-extrabold text-2xl sm:text-3xl text-[#F2F4F7] uppercase tracking-tight">
+                CERTIFICATIONS &amp; ACHIEVEMENTS
+              </h2>
             </div>
-          ))}
+            <span className="font-mono text-[11px] text-[#F5A623] uppercase tracking-wider flex items-center gap-1.5">
+              <Award className="w-3.5 h-3.5" />
+              <span>
+                {publishedCertifications.length}{' '}
+                {publishedCertifications.length === 1 ? 'VERIFIED CREDENTIAL' : 'VERIFIED CREDENTIALS'}
+              </span>
+            </span>
+          </div>
+
+          {/* Cards Grid */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-5">
+            {publishedCertifications.map((cert) => {
+              const statusLabel = cert.status || (cert.verified !== false ? 'Verified' : 'Active');
+              const categoryLabel = cert.category || cert.type || 'RECOGNITION';
+
+              return (
+                <div
+                  key={cert.id}
+                  className="p-5 sm:p-6 bg-[#080808] hover:bg-[#0B0C0E] border border-[#22252A] hover:border-[#343842] rounded-[8px] space-y-3 transition-colors"
+                >
+                  <div className="flex items-center justify-between">
+                    <span className="font-mono text-[9px] uppercase tracking-[0.14em] text-[#6F7682]">
+                      {categoryLabel}
+                    </span>
+                    <span className="flex items-center gap-1 font-mono text-[10px] text-[#8FB8E8] uppercase tracking-wider">
+                      <CheckCircle2 className="w-3 h-3 text-[#8FB8E8]" />
+                      <span>{statusLabel}</span>
+                    </span>
+                  </div>
+
+                  <h3 className="font-heading font-bold text-base text-[#F2F4F7] uppercase tracking-tight">
+                    {cert.title}
+                  </h3>
+
+                  {cert.description && (
+                    <p className="font-body text-xs text-[#A7ADB7] leading-relaxed">
+                      {cert.description}
+                    </p>
+                  )}
+
+                  {(cert.issuer || cert.period || cert.credentialUrl) && (
+                    <div className="pt-2 border-t border-[#17191D] flex items-center justify-between font-mono text-[10px] text-[#6F7682]">
+                      <span>{cert.issuer || ''}</span>
+                      {cert.credentialUrl ? (
+                        <a
+                          href={cert.credentialUrl}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-[#8FB8E8] hover:text-[#A8CCFC] underline"
+                        >
+                          CREDENTIAL ↗
+                        </a>
+                      ) : cert.period ? (
+                        <span>{cert.period}</span>
+                      ) : null}
+                    </div>
+                  )}
+                </div>
+              );
+            })}
+          </div>
         </div>
-      </div>
+      )}
 
     </div>
   );

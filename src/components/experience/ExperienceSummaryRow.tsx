@@ -1,8 +1,48 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Award, Compass, GraduationCap, Zap } from 'lucide-react';
 import { EXPERIENCE_SUMMARY_STATS } from '../../data/experienceData';
+import { getSiteSettings } from '../../services/portfolioDataService';
 
 export const ExperienceSummaryRow: React.FC = () => {
+  const [stats, setStats] = useState(EXPERIENCE_SUMMARY_STATS);
+
+  const loadStats = async () => {
+    try {
+      const settings = await getSiteSettings();
+      if (settings?.experienceSummaryStats && settings.experienceSummaryStats.length > 0) {
+        setStats((prev) =>
+          prev.map((s, idx) => {
+            const match = settings.experienceSummaryStats?.[idx];
+            if (match) {
+              return {
+                ...s,
+                label: match.label || s.label,
+                value: match.value || s.value,
+              };
+            }
+            return s;
+          })
+        );
+      }
+    } catch {
+      // Fallback intact
+    }
+  };
+
+  useEffect(() => {
+    loadStats();
+
+    const handleUpdate = (e: Event) => {
+      const customEvt = e as CustomEvent;
+      if (!customEvt.detail?.type || customEvt.detail.type === 'settings' || customEvt.detail.type === 'all') {
+        loadStats();
+      }
+    };
+
+    window.addEventListener('portfolio_data_updated', handleUpdate);
+    return () => window.removeEventListener('portfolio_data_updated', handleUpdate);
+  }, []);
+
   return (
     <div className="py-8 sm:py-10 border-b border-[#17191D]">
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
@@ -10,16 +50,16 @@ export const ExperienceSummaryRow: React.FC = () => {
         <div className="p-5 sm:p-6 bg-[#080808] border border-[#22252A] rounded-[8px] flex flex-col justify-between space-y-4 hover:border-[#343842] transition-colors">
           <div className="flex items-center justify-between">
             <span className="font-mono text-[10px] sm:text-[11px] uppercase tracking-[0.14em] text-[#A7ADB7]">
-              {EXPERIENCE_SUMMARY_STATS[0].label}
+              {stats[0]?.label || 'ROLES & CHAIRS'}
             </span>
             <Award className="w-4 h-4 text-[#F5A623]" />
           </div>
           <div>
             <div className="font-heading font-extrabold text-3xl sm:text-4xl text-[#F2F4F7] tracking-tight mb-1">
-              {EXPERIENCE_SUMMARY_STATS[0].value}
+              {stats[0]?.value || '3+'}
             </div>
             <p className="font-body text-xs text-[#6F7682] leading-relaxed">
-              {EXPERIENCE_SUMMARY_STATS[0].subtext}
+              {stats[0]?.subtext}
             </p>
           </div>
         </div>
@@ -28,16 +68,16 @@ export const ExperienceSummaryRow: React.FC = () => {
         <div className="p-5 sm:p-6 bg-[#080808] border border-[#22252A] rounded-[8px] flex flex-col justify-between space-y-4 hover:border-[#343842] transition-colors">
           <div className="flex items-center justify-between">
             <span className="font-mono text-[10px] sm:text-[11px] uppercase tracking-[0.14em] text-[#A7ADB7]">
-              {EXPERIENCE_SUMMARY_STATS[1].label}
+              {stats[1]?.label || 'CAMPAIGNS'}
             </span>
             <Compass className="w-4 h-4 text-[#8FB8E8]" />
           </div>
           <div>
             <div className="font-heading font-extrabold text-3xl sm:text-4xl text-[#F2F4F7] tracking-tight mb-1">
-              {EXPERIENCE_SUMMARY_STATS[1].value}
+              {stats[1]?.value || '6+'}
             </div>
             <p className="font-body text-xs text-[#6F7682] leading-relaxed">
-              {EXPERIENCE_SUMMARY_STATS[1].subtext}
+              {stats[1]?.subtext}
             </p>
           </div>
         </div>
@@ -46,16 +86,16 @@ export const ExperienceSummaryRow: React.FC = () => {
         <div className="p-5 sm:p-6 bg-[#080808] border border-[#22252A] rounded-[8px] flex flex-col justify-between space-y-4 hover:border-[#343842] transition-colors">
           <div className="flex items-center justify-between">
             <span className="font-mono text-[10px] sm:text-[11px] uppercase tracking-[0.14em] text-[#A7ADB7]">
-              {EXPERIENCE_SUMMARY_STATS[2].label}
+              {stats[2]?.label || 'AFFILIATION'}
             </span>
             <GraduationCap className="w-4 h-4 text-[#F2F4F7]" />
           </div>
           <div>
             <div className="font-heading font-bold text-2xl sm:text-3xl text-[#F2F4F7] tracking-tight mb-1">
-              {EXPERIENCE_SUMMARY_STATS[2].value}
+              {stats[2]?.value || 'IIT Madras BS'}
             </div>
             <p className="font-body text-xs text-[#6F7682] leading-relaxed">
-              {EXPERIENCE_SUMMARY_STATS[2].subtext}
+              {stats[2]?.subtext}
             </p>
           </div>
         </div>
@@ -64,10 +104,10 @@ export const ExperienceSummaryRow: React.FC = () => {
         <div className="p-5 sm:p-6 bg-[#080808] border border-[#22252A] rounded-[8px] flex flex-col justify-between space-y-4 hover:border-[#343842] transition-colors">
           <div className="flex items-center justify-between">
             <span className="font-mono text-[10px] sm:text-[11px] uppercase tracking-[0.14em] text-[#A7ADB7]">
-              {EXPERIENCE_SUMMARY_STATS[3].label}
+              {stats[3]?.label || 'OUTPUT VELOCITY'}
             </span>
             <span className="font-mono text-[11px] font-bold text-[#F5A623]">
-              {EXPERIENCE_SUMMARY_STATS[3].value}
+              {stats[3]?.value || '99.4% SLA'}
             </span>
           </div>
 

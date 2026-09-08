@@ -95,6 +95,26 @@
       },
       "required": ["name", "email", "projectType", "projectDetails"]
     },
+    "Testimonial": {
+      "title": "Testimonial",
+      "description": "Client testimonial and endorsement entry",
+      "type": "object",
+      "properties": {
+        "name": { "type": "string", "maxLength": 100 },
+        "quote": { "type": "string", "maxLength": 2000 },
+        "role": { "type": "string", "maxLength": 100 },
+        "organization": { "type": "string", "maxLength": 100 },
+        "rating": { "type": "number" },
+        "slotLabel": { "type": "string", "maxLength": 50 },
+        "verified": { "type": "boolean" },
+        "isPublic": { "type": "boolean" },
+        "order": { "type": "number" },
+        "avatarUrl": { "type": "string", "maxLength": 500 },
+        "createdAt": { "type": "string" },
+        "updatedAt": { "type": "string" }
+      },
+      "required": ["name", "quote"]
+    },
     "SiteSettings": {
       "title": "SiteSettings",
       "description": "Global portfolio configuration, contact channels, and availability",
@@ -130,7 +150,8 @@
         "availabilityStatus": { "type": "string" },
         "education": { "type": "object" },
         "tools": { "type": "array" },
-        "services": { "type": "array" }
+        "services": { "type": "array" },
+        "certifications": { "type": "array" }
       }
     }
   },
@@ -162,6 +183,10 @@
     "/aboutData/{docId}": {
       "schema": { "$ref": "#/entities/AboutData" },
       "description": "About profile and capabilities configuration"
+    },
+    "/testimonials/{testimonialId}": {
+      "schema": { "$ref": "#/entities/Testimonial" },
+      "description": "Collection of client testimonials and endorsements"
     }
   }
 }

@@ -1,37 +1,38 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Quote, Database, ShieldCheck } from 'lucide-react';
+import { AdminTestimonial } from '../../types/admin';
+import {
+  getPublicTestimonials,
+  BASELINE_TESTIMONIALS,
+} from '../../services/portfolioDataService';
 
 export const TestimonialsSection: React.FC = () => {
-  // Configured placeholder slots designed for Admin Dashboard population (Part 10)
-  const testimonialSlots = [
-    {
-      slotId: 'SLOT 01',
-      status: 'ADMIN EDITABLE',
-      quote:
-        'Saurabh brought immense rhythmic energy to our event aftermovie. The pacing was flawless, and the turnaround time exceeded all our expectations.',
-      name: 'Event Lead / Festival Producer',
-      organization: 'Cultural Festival Organization',
-      verified: true,
-    },
-    {
-      slotId: 'SLOT 02',
-      status: 'ADMIN EDITABLE',
-      quote:
-        'The social promotional graphics and posters created for our campaign had an authentic editorial feel that stood out cleanly in feeds and boosted engagement.',
-      name: 'Marketing Director',
-      organization: 'Digital Brand Agency',
-      verified: true,
-    },
-    {
-      slotId: 'SLOT 03',
-      status: 'ADMIN EDITABLE',
-      quote:
-        'A rare hybrid of sharp technical development and aesthetic sensitivity. The website was delivered clean, responsive, and completely on brand.',
-      name: 'Startup Founder',
-      organization: 'Tech Venture Studio',
-      verified: true,
-    },
-  ];
+  const [testimonials, setTestimonials] = useState<AdminTestimonial[]>(BASELINE_TESTIMONIALS);
+
+  const loadTestimonials = async () => {
+    try {
+      const data = await getPublicTestimonials();
+      if (data && data.length > 0) {
+        setTestimonials(data);
+      }
+    } catch {
+      // Fallback kept intact
+    }
+  };
+
+  useEffect(() => {
+    loadTestimonials();
+
+    const handleDataUpdate = (e: Event) => {
+      const customEvt = e as CustomEvent;
+      if (!customEvt.detail?.type || customEvt.detail.type === 'testimonials' || customEvt.detail.type === 'all') {
+        loadTestimonials();
+      }
+    };
+
+    window.addEventListener('portfolio_data_updated', handleDataUpdate);
+    return () => window.removeEventListener('portfolio_data_updated', handleDataUpdate);
+  }, []);
 
   return (
     <section id="testimonials" className="w-full bg-[#000000] py-16 sm:py-24 border-t border-[#17191D]">
@@ -57,11 +58,11 @@ export const TestimonialsSection: React.FC = () => {
           </div>
         </div>
 
-        {/* THREE EDITORIAL TESTIMONIAL SLOTS */}
+        {/* DYNAMIC EDITORIAL TESTIMONIAL CARDS */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 sm:gap-8 pt-8 sm:pt-12">
-          {testimonialSlots.map((item) => (
+          {testimonials.map((item, idx) => (
             <div
-              key={item.slotId}
+              key={item.id}
               className="bg-[#080808] border border-[#22252A] rounded-[8px] p-5 sm:p-7 flex flex-col justify-between space-y-6 sm:space-y-8 hover:border-[#8FB8E8]/30 transition-colors"
             >
               {/* Quote Top */}
@@ -69,7 +70,7 @@ export const TestimonialsSection: React.FC = () => {
                 <div className="flex items-center justify-between">
                   <Quote className="w-6 h-6 text-[#8FB8E8]/60" />
                   <span className="font-mono text-[10px] text-[#6F7682] uppercase tracking-widest border border-[#22252A] px-2 py-0.5 rounded">
-                    [{item.slotId}]
+                    [{item.slotLabel || `SLOT 0${idx + 1}`}]
                   </span>
                 </div>
 
@@ -84,10 +85,12 @@ export const TestimonialsSection: React.FC = () => {
                   <span className="font-heading font-bold text-[14px] text-[#F2F4F7] uppercase tracking-wide">
                     {item.name}
                   </span>
-                  <ShieldCheck className="w-3.5 h-3.5 text-[#8FB8E8]" />
+                  {item.verified !== false && <ShieldCheck className="w-3.5 h-3.5 text-[#8FB8E8]" />}
                 </div>
                 <p className="font-mono text-[11px] text-[#6F7682] uppercase tracking-wider">
-                  {item.organization}
+                  {item.role && item.organization
+                    ? `${item.role} • ${item.organization}`
+                    : item.organization || item.role || ''}
                 </p>
               </div>
             </div>

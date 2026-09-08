@@ -86,6 +86,10 @@ export interface AdminAboutData {
     degree: string;
     status: string;
     details: string;
+    curriculumMetrics?: {
+      label: string;
+      percent: number;
+    }[];
   };
   tools: {
     name: string;
@@ -96,6 +100,47 @@ export interface AdminAboutData {
     badge?: string;
     description: string;
   }[];
+  certifications?: AdminCertification[];
+}
+
+export interface AdminCertification {
+  id: string;
+  title: string;
+  category?: string;
+  issuer: string;
+  description?: string;
+  period: string;
+  credentialId?: string;
+  credentialUrl?: string;
+  verified: boolean;
+  status?: string;
+  statusType?: 'verified' | 'participant' | 'honored';
+  type?: 'Certification' | 'Achievement' | 'Award' | string;
+  isPublished?: boolean;
+  order: number;
+  createdAt?: string;
+  updatedAt?: string;
+}
+
+export interface ExperienceStatItem {
+  id: string;
+  label: string;
+  value: string;
+  order: number;
+}
+
+export interface AdminTestimonial {
+  id: string;
+  quote: string;
+  name: string;
+  role: string;
+  organization: string;
+  slotLabel?: string;
+  verified: boolean;
+  isPublic: boolean;
+  order: number;
+  createdAt?: string;
+  updatedAt?: string;
 }
 
 export interface AdminAboutSettings {
@@ -153,9 +198,14 @@ export interface AdminHomeContent {
 export interface AdminSiteSettings {
   id: string;
   siteName: string;
+  siteTitle?: string;
+  metaDescription?: string;
   logoMark: string;
   favicon?: string;
   primaryEmail: string;
+  footerCopyright?: string;
+  experienceSummaryStats?: ExperienceStatItem[];
+  testimonials?: AdminTestimonial[];
   socialLinks: {
     linkedin: string;
     github?: string;

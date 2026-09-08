@@ -21,6 +21,7 @@ import { AdminAuthProvider, useAdminAuth } from './context/AdminAuthContext';
 import { LoadingExperience } from './components/ui/LoadingExperience';
 import { WorkCategory } from './types';
 import { Info } from 'lucide-react';
+import { getSiteSettings } from './services/portfolioDataService';
 
 function AppContent() {
   const { user } = useAdminAuth();
@@ -146,6 +147,40 @@ function AppContent() {
       return;
     }
   };
+
+  // Synchronize dynamic title & SEO meta tags from site settings
+  useEffect(() => {
+    const syncSeo = async () => {
+      try {
+        const settings = await getSiteSettings();
+        if (settings?.siteTitle) {
+          document.title = settings.siteTitle;
+        }
+        if (settings?.metaDescription) {
+          const metaDesc = document.querySelector('meta[name="description"]');
+          if (metaDesc) metaDesc.setAttribute('content', settings.metaDescription);
+          const ogDesc = document.querySelector('meta[property="og:description"]');
+          if (ogDesc) ogDesc.setAttribute('content', settings.metaDescription);
+        }
+        if (settings?.siteTitle) {
+          const ogTitle = document.querySelector('meta[property="og:title"]');
+          if (ogTitle) ogTitle.setAttribute('content', settings.siteTitle);
+        }
+      } catch {
+        // Fallback to static HTML defaults
+      }
+    };
+
+    syncSeo();
+    const handleUpdate = (e: Event) => {
+      const customEvt = e as CustomEvent;
+      if (!customEvt.detail?.type || customEvt.detail.type === 'settings' || customEvt.detail.type === 'all') {
+        syncSeo();
+      }
+    };
+    window.addEventListener('portfolio_data_updated', handleUpdate);
+    return () => window.removeEventListener('portfolio_data_updated', handleUpdate);
+  }, []);
 
   // Listen for browser popstate
   useEffect(() => {

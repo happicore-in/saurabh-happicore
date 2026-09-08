@@ -14,12 +14,14 @@ import {
   AdminExperience,
   AdminAboutData,
   AdminSiteSettings,
+  AdminTestimonial,
+  AdminCertification,
 } from '../types/admin';
 import { FLAGSHIP_WEB_PROJECT, SELECTED_WEB_PROJECTS } from '../data/webProjects';
 import { FEATURED_VIDEO_PROJECT, SELECTED_VIDEO_PROJECTS } from '../data/videoProjects';
 import { FEATURED_GRAPHIC_PROJECT, SELECTED_GRAPHIC_PROJECTS } from '../data/graphicProjects';
 import { EXPERIENCE_ITEMS } from '../data/experienceData';
-import { ABOUT_PROFILE, WHAT_I_DO_ITEMS } from '../data/aboutData';
+import { ABOUT_PROFILE, WHAT_I_DO_ITEMS, ABOUT_CERTIFICATIONS } from '../data/aboutData';
 import {
   WebProjectItem,
   VideoProjectItem,
@@ -171,6 +173,69 @@ export const BASELINE_EXPERIENCES: AdminExperience[] = EXPERIENCE_ITEMS.map((e, 
   order: idx + 1,
 }));
 
+export const BASELINE_ABOUT_CERTIFICATIONS: AdminCertification[] = [
+  {
+    id: 'canva',
+    title: 'Canva Essentials Certified',
+    category: 'VISUAL DESIGN',
+    issuer: 'Canva Design School',
+    description:
+      'Comprehensive mastery in rapid asset production, brand consistency, layout structuring, and modern marketing graphics.',
+    status: 'Verified',
+    statusType: 'verified',
+    type: 'Certification',
+    verified: true,
+    isPublished: true,
+    period: '2025',
+    order: 1,
+  },
+  {
+    id: 'rift26',
+    title: "RIFT'26 Hackathon",
+    category: 'HACKATHON // ENGINEERING',
+    issuer: 'RIFT Tech Summit',
+    description:
+      'Competitive development sprint focused on building low-latency solutions, real-time UI/UX, and rapid computational prototypes.',
+    status: 'Participant',
+    statusType: 'participant',
+    type: 'Achievement',
+    verified: true,
+    isPublished: true,
+    period: '2026',
+    order: 2,
+  },
+  {
+    id: 'fullstack',
+    title: 'Foundations of Full Stack Development',
+    category: 'WEB ARCHITECTURE',
+    issuer: 'IIT Madras / Computational Systems',
+    description:
+      'In-depth credential covering client-server paradigms, RESTful interfaces, modern frontend component architecture, and deployment protocols.',
+    status: 'Verified',
+    statusType: 'verified',
+    type: 'Certification',
+    verified: true,
+    isPublished: true,
+    period: '2025',
+    order: 3,
+  },
+  {
+    id: 'appreciation',
+    title: 'Certificate of Appreciation',
+    category: 'INSTITUTIONAL HONOR',
+    issuer: 'IIT Madras BS Degree Sports Society',
+    description:
+      'Technology & Digital Innovation award presented by IIT Madras BS Degree Sports Society for driving visual media, design systems, and digital operations.',
+    status: 'Honored',
+    statusType: 'honored',
+    type: 'Award',
+    verified: true,
+    isPublished: true,
+    period: '2025',
+    order: 4,
+  },
+];
+
 export const BASELINE_ABOUT_DATA: AdminAboutData = {
   profileImage: '',
   shortIntro: ABOUT_PROFILE.bioHeading,
@@ -183,7 +248,13 @@ export const BASELINE_ABOUT_DATA: AdminAboutData = {
     degree: ABOUT_PROFILE.education.degree,
     status: ABOUT_PROFILE.education.status,
     details: ABOUT_PROFILE.education.details,
+    curriculumMetrics: [
+      { label: 'Data Science & Algorithmic Foundation', percent: 85 },
+      { label: 'Computational Web Systems', percent: 90 },
+      { label: 'Digital Media Production & Broadcast', percent: 95 },
+    ],
   },
+  certifications: BASELINE_ABOUT_CERTIFICATIONS,
   tools: [
     { name: 'CapCut PC', category: 'video' },
     { name: 'Premiere Pro', category: 'video' },
@@ -203,12 +274,61 @@ export const BASELINE_ABOUT_DATA: AdminAboutData = {
   })),
 };
 
+export const BASELINE_TESTIMONIALS: AdminTestimonial[] = [
+  {
+    id: 'test-01',
+    slotLabel: 'SLOT 01',
+    quote:
+      'Saurabh brought immense rhythmic energy to our event aftermovie. The pacing was flawless, and the turnaround time exceeded all our expectations.',
+    name: 'Event Lead / Festival Producer',
+    role: 'Festival Producer',
+    organization: 'Cultural Festival Organization',
+    verified: true,
+    isPublic: true,
+    order: 1,
+  },
+  {
+    id: 'test-02',
+    slotLabel: 'SLOT 02',
+    quote:
+      'The social promotional graphics and posters created for our campaign had an authentic editorial feel that stood out cleanly in feeds and boosted engagement.',
+    name: 'Marketing Director',
+    role: 'Marketing Director',
+    organization: 'Digital Brand Agency',
+    verified: true,
+    isPublic: true,
+    order: 2,
+  },
+  {
+    id: 'test-03',
+    slotLabel: 'SLOT 03',
+    quote:
+      'A rare hybrid of sharp technical development and aesthetic sensitivity. The website was delivered clean, responsive, and completely on brand.',
+    name: 'Startup Founder',
+    role: 'Startup Founder',
+    organization: 'Tech Venture Studio',
+    verified: true,
+    isPublic: true,
+    order: 3,
+  },
+];
+
 export const BASELINE_SITE_SETTINGS: AdminSiteSettings = {
   id: 'global',
   siteName: 'SAURABH // CREATIVE MULTIDISCIPLINARY',
+  siteTitle: 'SAURABH // CREATIVE MULTIDISCIPLINARY',
+  metaDescription: 'Multidisciplinary portfolio of Saurabh — Video Editor, Graphic Designer & Web Developer.',
+  footerCopyright: '© 2026 SAURABH // HAPPICORE. ALL RIGHTS RESERVED.',
   logoMark: 'S // M',
   favicon: '/favicon.ico',
   primaryEmail: 'happicore.in@gmail.com',
+  experienceSummaryStats: [
+    { id: 'stat-roles', label: 'ROLES & CHAIRS', value: '3+', order: 1 },
+    { id: 'stat-campaigns', label: 'CAMPAIGNS', value: '6+', order: 2 },
+    { id: 'stat-affiliation', label: 'AFFILIATION', value: 'IIT Madras BS', order: 3 },
+    { id: 'stat-velocity', label: 'OUTPUT VELOCITY', value: '99.4% SLA', order: 4 },
+  ],
+  testimonials: BASELINE_TESTIMONIALS,
   socialLinks: {
     linkedin: 'https://linkedin.com/in/saurabh-0732a8372',
     github: 'https://github.com/happicore',
@@ -316,6 +436,7 @@ function purgeLegacyPortfolioLocalStorage(): void {
       'saurabh_portfolio_cache_v2_experience',
       'saurabh_portfolio_cache_v2_settings',
       'saurabh_portfolio_cache_v2_about',
+      'saurabh_portfolio_cache_v2_testimonials',
       'saurabh_admin_web_projects',
       'saurabh_admin_video_projects',
       'saurabh_admin_graphic_projects',
@@ -341,6 +462,7 @@ interface MemoryCacheStore {
   about?: AdminAboutData;
   settings?: AdminSiteSettings;
   featuredHome?: PublicHomeFeaturedItem[];
+  testimonials?: AdminTestimonial[];
 }
 
 const memoryCache: MemoryCacheStore = {};
@@ -350,7 +472,7 @@ const inFlightPromises: { [key: string]: Promise<any> | undefined } = {};
  * Invalidate in-memory cache when data changes or force-refresh is requested.
  */
 export function invalidatePortfolioDataCache(
-  type?: 'web' | 'video' | 'graphic' | 'experience' | 'about' | 'settings' | 'all'
+  type?: 'web' | 'video' | 'graphic' | 'experience' | 'about' | 'settings' | 'testimonials' | 'all'
 ) {
   if (!type || type === 'all') {
     delete memoryCache.web;
@@ -360,6 +482,7 @@ export function invalidatePortfolioDataCache(
     delete memoryCache.about;
     delete memoryCache.settings;
     delete memoryCache.featuredHome;
+    delete memoryCache.testimonials;
   } else if (type === 'web') {
     delete memoryCache.web;
     delete memoryCache.featuredHome;
@@ -376,6 +499,8 @@ export function invalidatePortfolioDataCache(
   } else if (type === 'settings') {
     delete memoryCache.settings;
     delete memoryCache.featuredHome;
+  } else if (type === 'testimonials') {
+    delete memoryCache.testimonials;
   }
 }
 
@@ -807,6 +932,16 @@ export async function getAboutData(forceRefresh = false): Promise<AdminAboutData
       let data: AdminAboutData;
       if (snap.exists()) {
         data = snap.data() as AdminAboutData;
+        // Ensure certifications are properly populated with baseline about certifications if missing or old placeholder
+        if (!data.certifications || data.certifications.length === 0) {
+          data.certifications = BASELINE_ABOUT_CERTIFICATIONS;
+        } else {
+          // If all current certifications are the legacy experience placeholders with no description or category
+          const hasRichFields = data.certifications.some((c) => c.category || c.description);
+          if (!hasRichFields) {
+            data.certifications = BASELINE_ABOUT_CERTIFICATIONS;
+          }
+        }
       } else {
         // Document does not exist in Firestore yet: return initial application baseline
         data = BASELINE_ABOUT_DATA;
@@ -1256,46 +1391,54 @@ function webRole(p: AdminWebProject): string {
 export async function ensureFirestoreDataSeeded(): Promise<{ seeded: boolean; collections: string[] }> {
   const seededCollections: string[] = [];
   try {
-    const [webSnap, vidSnap, grpSnap, expSnap, setSnap, abtSnap] = await Promise.all([
-      getDocs(collection(db, 'webProjects')),
-      getDocs(collection(db, 'videoProjects')),
-      getDocs(collection(db, 'graphicProjects')),
-      getDocs(collection(db, 'experiences')),
-      getDoc(doc(db, 'siteSettings', 'global')),
-      getDoc(doc(db, 'aboutData', 'main')),
+    const [webSnap, vidSnap, grpSnap, expSnap, setSnap, abtSnap, testSnap] = await Promise.all([
+      getDocs(collection(db, 'webProjects')).catch(() => null),
+      getDocs(collection(db, 'videoProjects')).catch(() => null),
+      getDocs(collection(db, 'graphicProjects')).catch(() => null),
+      getDocs(collection(db, 'experiences')).catch(() => null),
+      getDoc(doc(db, 'siteSettings', 'global')).catch(() => null),
+      getDoc(doc(db, 'aboutData', 'main')).catch(() => null),
+      getDocs(collection(db, 'testimonials')).catch(() => null),
     ]);
 
     const writes: Promise<any>[] = [];
 
-    if (webSnap.empty) {
+    if (webSnap && webSnap.empty) {
       for (const p of BASELINE_WEB_PROJECTS) {
         writes.push(setDoc(doc(db, 'webProjects', p.id), p));
       }
       seededCollections.push('webProjects');
     }
 
-    if (vidSnap.empty) {
+    if (vidSnap && vidSnap.empty) {
       for (const p of BASELINE_VIDEO_PROJECTS) {
         writes.push(setDoc(doc(db, 'videoProjects', p.id), p));
       }
       seededCollections.push('videoProjects');
     }
 
-    if (grpSnap.empty) {
+    if (grpSnap && grpSnap.empty) {
       for (const p of BASELINE_GRAPHIC_PROJECTS) {
         writes.push(setDoc(doc(db, 'graphicProjects', p.id), p));
       }
       seededCollections.push('graphicProjects');
     }
 
-    if (expSnap.empty) {
+    if (expSnap && expSnap.empty) {
       for (const p of BASELINE_EXPERIENCES) {
         writes.push(setDoc(doc(db, 'experiences', p.id), p));
       }
       seededCollections.push('experiences');
     }
 
-    if (!setSnap.exists()) {
+    if (testSnap && testSnap.empty) {
+      for (const t of BASELINE_TESTIMONIALS) {
+        writes.push(setDoc(doc(db, 'testimonials', t.id), t).catch(() => null));
+      }
+      seededCollections.push('testimonials');
+    }
+
+    if (setSnap && !setSnap.exists()) {
       writes.push(
         setDoc(doc(db, 'siteSettings', 'global'), {
           ...BASELINE_SITE_SETTINGS,
@@ -1305,7 +1448,7 @@ export async function ensureFirestoreDataSeeded(): Promise<{ seeded: boolean; co
       seededCollections.push('siteSettings');
     }
 
-    if (!abtSnap.exists()) {
+    if (abtSnap && !abtSnap.exists()) {
       writes.push(setDoc(doc(db, 'aboutData', 'main'), BASELINE_ABOUT_DATA));
       seededCollections.push('aboutData');
     }
@@ -1380,3 +1523,187 @@ export async function getAnyProjectDetails(projectId: string) {
 
   return null;
 }
+
+// ========================================================
+// 7. Testimonials API
+// ========================================================
+export async function getAllTestimonials(): Promise<AdminTestimonial[]> {
+  if (memoryCache.testimonials && memoryCache.testimonials.length > 0) {
+    return memoryCache.testimonials;
+  }
+
+  let items: AdminTestimonial[] = [];
+
+  // 1. Try reading from collection('testimonials')
+  try {
+    const snap = await withFirestoreTimeout(getDocs(collection(db, 'testimonials')), 8000);
+    if (snap && !snap.empty) {
+      snap.forEach((d) => items.push({ ...d.data(), id: d.id } as AdminTestimonial));
+    }
+  } catch (err) {
+    console.warn('Firestore fetch all testimonials collection notice:', err);
+  }
+
+  // 2. Fallback to siteSettings.testimonials if collection is empty or restricted
+  if (items.length === 0) {
+    try {
+      const settings = await getSiteSettings();
+      if (settings?.testimonials && settings.testimonials.length > 0) {
+        items = [...settings.testimonials];
+      }
+    } catch (err) {
+      console.warn('Firestore fetch testimonials from siteSettings notice:', err);
+    }
+  }
+
+  if (items.length > 0) {
+    items.sort((a, b) => (a.order || 0) - (b.order || 0));
+    memoryCache.testimonials = items;
+    return items;
+  }
+
+  return BASELINE_TESTIMONIALS;
+}
+
+export async function getPublicTestimonials(): Promise<AdminTestimonial[]> {
+  const all = await getAllTestimonials();
+  return all.filter((t) => t.isPublic !== false);
+}
+
+export async function saveTestimonial(testimonial: AdminTestimonial): Promise<void> {
+  const clean: AdminTestimonial = sanitizeFirestoreData({
+    ...testimonial,
+    updatedAt: new Date().toISOString(),
+  });
+
+  // 1. Primary: Save to siteSettings.testimonials under /siteSettings/global
+  // This guarantees reliable persistence under existing authorized firestore rules
+  try {
+    const currentSettings = await getSiteSettings();
+    const existingList = currentSettings.testimonials || (await getAllTestimonials()) || [];
+    const index = existingList.findIndex((t) => t.id === testimonial.id);
+    let updatedList: AdminTestimonial[];
+    if (index >= 0) {
+      updatedList = [...existingList];
+      updatedList[index] = clean;
+    } else {
+      updatedList = [...existingList, clean];
+    }
+    updatedList.sort((a, b) => (a.order || 0) - (b.order || 0));
+
+    currentSettings.testimonials = updatedList;
+    await setDoc(doc(db, 'siteSettings', 'global'), sanitizeFirestoreData(currentSettings));
+    memoryCache.settings = currentSettings;
+    memoryCache.testimonials = updatedList;
+  } catch (settingsSyncErr) {
+    console.warn('[Testimonials] siteSettings sync notice:', settingsSyncErr);
+  }
+
+  // 2. Secondary: Also save directly to /testimonials/{id} collection
+  try {
+    await withFirestoreTimeout(setDoc(doc(db, 'testimonials', testimonial.id), clean), 12000);
+  } catch (err: any) {
+    console.warn('[Testimonials] Direct collection setDoc notice (safely stored in siteSettings):', err?.message || err);
+  }
+
+  invalidatePortfolioDataCache('testimonials');
+  if (typeof window !== 'undefined') {
+    window.dispatchEvent(
+      new CustomEvent('portfolio_data_updated', {
+        detail: { type: 'testimonials' },
+      })
+    );
+  }
+}
+
+export async function deleteTestimonial(id: string): Promise<void> {
+  // 1. Primary: Remove from siteSettings.testimonials under /siteSettings/global
+  try {
+    const currentSettings = await getSiteSettings();
+    if (currentSettings.testimonials) {
+      const updatedList = currentSettings.testimonials.filter((t) => t.id !== id);
+      currentSettings.testimonials = updatedList;
+      await setDoc(doc(db, 'siteSettings', 'global'), sanitizeFirestoreData(currentSettings));
+      memoryCache.settings = currentSettings;
+      memoryCache.testimonials = updatedList;
+    }
+  } catch (settingsSyncErr) {
+    console.warn('[Testimonials] siteSettings delete sync notice:', settingsSyncErr);
+  }
+
+  // 2. Secondary: Also delete from /testimonials/{id} collection
+  try {
+    await withFirestoreTimeout(deleteDoc(doc(db, 'testimonials', id)), 12000);
+  } catch (err: any) {
+    console.warn('[Testimonials] Direct collection deleteDoc notice:', err?.message || err);
+  }
+
+  invalidatePortfolioDataCache('testimonials');
+  if (typeof window !== 'undefined') {
+    window.dispatchEvent(
+      new CustomEvent('portfolio_data_updated', {
+        detail: { type: 'testimonials' },
+      })
+    );
+  }
+}
+
+// ========================================================
+// 8. Certifications & Achievements API (About Page Ownership)
+// ========================================================
+export async function getPublicCertifications(): Promise<AdminCertification[]> {
+  const about = await getAboutData();
+  const certs = about?.certifications || BASELINE_ABOUT_CERTIFICATIONS;
+  return certs
+    .filter((c) => c.isPublished !== false)
+    .sort((a, b) => (a.order || 0) - (b.order || 0));
+}
+
+export async function getAllCertifications(): Promise<AdminCertification[]> {
+  const about = await getAboutData();
+  const certs = about?.certifications || BASELINE_ABOUT_CERTIFICATIONS;
+  return [...certs].sort((a, b) => (a.order || 0) - (b.order || 0));
+}
+
+export async function saveCertification(cert: AdminCertification): Promise<AdminCertification> {
+  const about = await getAboutData();
+  const currentCerts = about?.certifications ? [...about.certifications] : [...BASELINE_ABOUT_CERTIFICATIONS];
+  const idx = currentCerts.findIndex((c) => c.id === cert.id);
+  const now = new Date().toISOString();
+  const cleanCert: AdminCertification = sanitizeFirestoreData({
+    ...cert,
+    updatedAt: now,
+  });
+
+  if (idx >= 0) {
+    cleanCert.createdAt = currentCerts[idx].createdAt || now;
+    currentCerts[idx] = cleanCert;
+  } else {
+    cleanCert.createdAt = now;
+    currentCerts.push(cleanCert);
+  }
+
+  currentCerts.sort((a, b) => (a.order || 0) - (b.order || 0));
+  about.certifications = currentCerts;
+
+  await saveAboutData(about);
+  return cleanCert;
+}
+
+export async function deleteCertification(id: string): Promise<void> {
+  const about = await getAboutData();
+  const currentCerts = about?.certifications ? [...about.certifications] : [...BASELINE_ABOUT_CERTIFICATIONS];
+  about.certifications = currentCerts.filter((c) => c.id !== id);
+  await saveAboutData(about);
+}
+
+export async function reorderCertifications(reordered: AdminCertification[]): Promise<void> {
+  const about = await getAboutData();
+  about.certifications = reordered.map((item, idx) => ({
+    ...item,
+    order: idx + 1,
+  }));
+  await saveAboutData(about);
+}
+
+

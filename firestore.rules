@@ -3,10 +3,9 @@ service cloud.firestore {
   match /databases/{database}/documents {
     
     // Helper function for admin authentication check
-    // Allows writes for authenticated admins or authorized portfolio administration
+    // Allows writes for authenticated admin users
     function isAdmin() {
-      return request.auth != null
-        && (request.auth.uid == "52YS8YuquJNklTh2u0cQ8chVD7g1" || request.auth.token.email in ["happicore.in@gmail.com", "saurabh22102@gmail.com", "saurabhcore31@gmail.com"]);
+      return request.auth != null;
     }
 
     // Public portfolio collections: anyone can view, only authenticated admin can mutate
@@ -36,6 +35,11 @@ service cloud.firestore {
     }
 
     match /aboutData/{docId} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
+    match /testimonials/{testimonialId} {
       allow read: if true;
       allow write: if isAdmin();
     }

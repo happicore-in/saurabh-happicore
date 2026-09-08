@@ -6,7 +6,9 @@ import {
   AdminGraphicProject,
   AdminExperience,
   AdminAboutData,
+  AdminCertification,
   AdminSiteSettings,
+  AdminTestimonial,
 } from '../../types/admin';
 import {
   getWebProjects,
@@ -24,8 +26,15 @@ import {
   reorderExperiences,
   getAboutData,
   saveAboutData,
+  saveCertification,
+  deleteCertification,
+  reorderCertifications,
   getSiteSettings,
   saveSiteSettings,
+  getPublicTestimonials,
+  getAllTestimonials,
+  saveTestimonial,
+  deleteTestimonial,
   ensureFirestoreDataSeeded,
   invalidatePortfolioDataCache,
 } from '../../services/portfolioDataService';
@@ -44,8 +53,10 @@ import { VideoManagement } from './VideoManagement';
 import { GraphicManagement } from './GraphicManagement';
 import { ExperienceManagement } from './ExperienceManagement';
 import { AboutManagement } from './AboutManagement';
+import { CertificationsManagement } from './CertificationsManagement';
 import { ContactEnquiriesManagement } from './ContactEnquiriesManagement';
 import { SiteSettingsManagement } from './SiteSettingsManagement';
+import { TestimonialsManagement } from './TestimonialsManagement';
 
 // Icons
 import {
@@ -55,6 +66,7 @@ import {
   Layers,
   Briefcase,
   User,
+  Award,
   Mail,
   Settings,
   LogOut,
@@ -65,6 +77,7 @@ import {
   CheckCircle2,
   AlertCircle,
   RefreshCw,
+  Quote,
 } from 'lucide-react';
 
 interface AdminDashboardProps {
@@ -87,6 +100,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBackToPublic }
   const [aboutData, setAboutData] = useState<AdminAboutData | null>(null);
   const [settings, setSettings] = useState<AdminSiteSettings | null>(null);
   const [enquiries, setEnquiries] = useState<ProjectEnquiry[]>([]);
+  const [testimonials, setTestimonials] = useState<AdminTestimonial[]>([]);
 
   // Selected enquiry for details modal
   const [selectedEnquiry, setSelectedEnquiry] = useState<ProjectEnquiry | null>(null);
@@ -107,7 +121,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBackToPublic }
     invalidatePortfolioDataCache('all');
     clearEnquiryMemoryCache();
     try {
-      const [webs, vids, graphics, exps, abt, sett, enqs] = await Promise.all([
+      const [webs, vids, graphics, exps, abt, sett, enqs, tests] = await Promise.all([
         getWebProjects(true),
         getVideoProjects(true),
         getGraphicProjects(true),
@@ -115,6 +129,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBackToPublic }
         getAboutData(true),
         getSiteSettings(true),
         getEnquiries(true),
+        getAllTestimonials(),
       ]);
 
       setWebProjects(webs);
@@ -124,6 +139,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBackToPublic }
       setAboutData(abt);
       setSettings(sett);
       setEnquiries(enqs);
+      setTestimonials(tests);
     } catch (err) {
       console.error('Failed to load admin data:', err);
       showToast('Error loading some database records.', 'error');
@@ -291,6 +307,49 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBackToPublic }
     }
   };
 
+  // Certification Handlers
+  const handleSaveCertification = async (cert: AdminCertification) => {
+    try {
+      const updatedList = await saveCertification(cert);
+      if (aboutData) {
+        setAboutData({ ...aboutData, certifications: updatedList });
+      }
+      showToast('Certification saved to Firestore.', 'success');
+    } catch (err: any) {
+      console.error('Failed to save certification:', err);
+      showToast(err?.message || 'Failed to save certification.', 'error');
+      throw err;
+    }
+  };
+
+  const handleDeleteCertification = async (id: string) => {
+    try {
+      const updatedList = await deleteCertification(id);
+      if (aboutData) {
+        setAboutData({ ...aboutData, certifications: updatedList });
+      }
+      showToast('Certification deleted from Firestore.', 'success');
+    } catch (err: any) {
+      console.error('Failed to delete certification:', err);
+      showToast(err?.message || 'Failed to delete certification.', 'error');
+      throw err;
+    }
+  };
+
+  const handleReorderCertifications = async (reordered: AdminCertification[]) => {
+    try {
+      const updatedList = await reorderCertifications(reordered);
+      if (aboutData) {
+        setAboutData({ ...aboutData, certifications: updatedList });
+      }
+      showToast('Certification order saved to Firestore.', 'success');
+    } catch (err: any) {
+      console.error('Failed to reorder certifications:', err);
+      showToast(err?.message || 'Failed to reorder certifications.', 'error');
+      throw err;
+    }
+  };
+
   // Settings Handler
   const handleSaveSettings = async (data: AdminSiteSettings) => {
     try {
@@ -320,6 +379,35 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBackToPublic }
     setEnquiries((prev) => prev.filter((e) => e.id !== id));
   };
 
+  // Testimonials Handlers
+  const handleSaveTestimonial = async (item: AdminTestimonial) => {
+    try {
+      await saveTestimonial(item);
+      setTestimonials((prev) => {
+        const exists = prev.some((t) => t.id === item.id);
+        const next = exists ? prev.map((t) => (t.id === item.id ? item : t)) : [...prev, item];
+        return next.sort((a, b) => (a.order || 0) - (b.order || 0));
+      });
+      showToast('Testimonial saved to Firestore.', 'success');
+    } catch (err: any) {
+      console.error('Failed to save testimonial:', err);
+      showToast(err?.message || 'Failed to save testimonial.', 'error');
+      throw err;
+    }
+  };
+
+  const handleDeleteTestimonial = async (id: string) => {
+    try {
+      await deleteTestimonial(id);
+      setTestimonials((prev) => prev.filter((t) => t.id !== id));
+      showToast('Testimonial deleted from Firestore.', 'success');
+    } catch (err: any) {
+      console.error('Failed to delete testimonial:', err);
+      showToast(err?.message || 'Failed to delete testimonial.', 'error');
+      throw err;
+    }
+  };
+
   // Navigation Items
   const navItems = [
     { id: 'dashboard', label: 'DASHBOARD', icon: LayoutDashboard },
@@ -327,6 +415,13 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBackToPublic }
     { id: 'work-video', label: 'VIDEO WORK', icon: Video, count: videoProjects.length },
     { id: 'work-graphic', label: 'GRAPHIC WORK', icon: Layers, count: graphicProjects.length },
     { id: 'experience', label: 'EXPERIENCE', icon: Briefcase, count: experiences.length },
+    { id: 'testimonials', label: 'TESTIMONIALS', icon: Quote, count: testimonials.length },
+    {
+      id: 'certifications',
+      label: 'CERTIFICATIONS',
+      icon: Award,
+      count: (aboutData?.certifications || []).length,
+    },
     { id: 'about', label: 'ABOUT', icon: User },
     {
       id: 'contact',
@@ -613,6 +708,27 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBackToPublic }
                     onSave={handleSaveExperience}
                     onDelete={handleDeleteExperience}
                     onReorder={handleReorderExperiences}
+                    showToast={showToast}
+                  />
+                )}
+
+                {/* 5.1 Testimonials Management */}
+                {activeTab === 'testimonials' && (
+                  <TestimonialsManagement
+                    testimonials={testimonials}
+                    onSave={handleSaveTestimonial}
+                    onDelete={handleDeleteTestimonial}
+                    showToast={showToast}
+                  />
+                )}
+
+                {/* 5.2 Certifications & Achievements Management */}
+                {activeTab === 'certifications' && aboutData && (
+                  <CertificationsManagement
+                    certifications={aboutData.certifications || []}
+                    onSave={handleSaveCertification}
+                    onDelete={handleDeleteCertification}
+                    onReorder={handleReorderCertifications}
                     showToast={showToast}
                   />
                 )}
