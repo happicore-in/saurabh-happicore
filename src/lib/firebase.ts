@@ -71,11 +71,11 @@ export const firebaseConfig = {
 // Initialize or reuse Firebase App
 export const app = getApps().length === 0 ? initializeApp(firebaseConfig) : getApp();
 
-// Initialize Firestore with explicit force long polling to bypass failing WebChannel streaming connections in sandboxed/iframe environments
+// Initialize Firestore with auto-detect long polling so production web uses fast WebSockets while automatically falling back if proxies or firewalls block WebSockets
 export const db = initializeFirestore(
   app,
   {
-    experimentalForceLongPolling: true,
+    experimentalAutoDetectLongPolling: true,
   },
   firebaseConfig.firestoreDatabaseId && firebaseConfig.firestoreDatabaseId !== '(default)'
     ? firebaseConfig.firestoreDatabaseId

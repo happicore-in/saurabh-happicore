@@ -380,7 +380,7 @@ export function invalidatePortfolioDataCache(
 }
 
 // Resilient promise timeout to prevent hanging when offline or experiencing network delay
-async function withFirestoreTimeout<T>(promise: Promise<T>, ms = 7000): Promise<T> {
+async function withFirestoreTimeout<T>(promise: Promise<T>, ms = 12000): Promise<T> {
   let timer: any;
   const timeoutPromise = new Promise<never>((_, reject) => {
     timer = setTimeout(() => {
@@ -410,7 +410,7 @@ export async function getWebProjects(forceRefresh = false): Promise<AdminWebProj
   const promise = (async () => {
     try {
       // 2. Primary & ONLY persistent source of truth: Firestore database
-      const snap = await withFirestoreTimeout(getDocs(collection(db, 'webProjects')), 7000);
+      const snap = await withFirestoreTimeout(getDocs(collection(db, 'webProjects')), 12000);
       const list: AdminWebProject[] = [];
       snap.forEach((d) => list.push({ ...d.data(), id: d.id } as AdminWebProject));
       list.sort((a, b) => (a.order || 0) - (b.order || 0));
@@ -513,7 +513,7 @@ export async function getVideoProjects(forceRefresh = false): Promise<AdminVideo
 
   const promise = (async () => {
     try {
-      const snap = await withFirestoreTimeout(getDocs(collection(db, 'videoProjects')), 7000);
+      const snap = await withFirestoreTimeout(getDocs(collection(db, 'videoProjects')), 12000);
       const list: AdminVideoProject[] = [];
       snap.forEach((d) => list.push({ ...d.data(), id: d.id } as AdminVideoProject));
       list.sort((a, b) => (a.order || 0) - (b.order || 0));
@@ -608,7 +608,7 @@ export async function getGraphicProjects(forceRefresh = false): Promise<AdminGra
 
   const promise = (async () => {
     try {
-      const snap = await withFirestoreTimeout(getDocs(collection(db, 'graphicProjects')), 7000);
+      const snap = await withFirestoreTimeout(getDocs(collection(db, 'graphicProjects')), 12000);
       const list: AdminGraphicProject[] = [];
       snap.forEach((d) => list.push({ ...d.data(), id: d.id } as AdminGraphicProject));
       list.sort((a, b) => (a.order || 0) - (b.order || 0));
@@ -703,7 +703,7 @@ export async function getExperiences(forceRefresh = false): Promise<AdminExperie
 
   const promise = (async () => {
     try {
-      const snap = await withFirestoreTimeout(getDocs(collection(db, 'experiences')), 7000);
+      const snap = await withFirestoreTimeout(getDocs(collection(db, 'experiences')), 12000);
       const list: AdminExperience[] = [];
       snap.forEach((d) => list.push({ ...d.data(), id: d.id } as AdminExperience));
       list.sort((a, b) => (a.order || 0) - (b.order || 0));
@@ -803,7 +803,7 @@ export async function getAboutData(forceRefresh = false): Promise<AdminAboutData
 
   const promise = (async () => {
     try {
-      const snap = await withFirestoreTimeout(getDoc(doc(db, 'aboutData', 'main')), 7000);
+      const snap = await withFirestoreTimeout(getDoc(doc(db, 'aboutData', 'main')), 12000);
       let data: AdminAboutData;
       if (snap.exists()) {
         data = snap.data() as AdminAboutData;
@@ -889,7 +889,7 @@ export async function getSiteSettings(forceRefresh = false): Promise<AdminSiteSe
 
   const promise = (async () => {
     try {
-      const snap = await withFirestoreTimeout(getDoc(doc(db, 'siteSettings', 'global')), 7000);
+      const snap = await withFirestoreTimeout(getDoc(doc(db, 'siteSettings', 'global')), 12000);
       let data: AdminSiteSettings;
       if (snap.exists()) {
         data = snap.data() as AdminSiteSettings;

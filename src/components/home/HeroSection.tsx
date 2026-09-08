@@ -213,7 +213,7 @@ export const HeroSection: React.FC<HeroSectionProps> = ({
                 {locationText}
               </p>
               <p className="font-mono text-[11px] text-[#6F7682]">
-                ORIGIN: {IDENTITY.coordinates}
+                ORIGIN: {IDENTITY.location}
               </p>
             </div>
 
@@ -264,7 +264,7 @@ export const HeroSection: React.FC<HeroSectionProps> = ({
 
         <div className="flex items-center gap-3 font-mono text-[11px] text-[#6F7682] tracking-[0.08em] uppercase">
           <Compass className="w-3.5 h-3.5 text-[#8FB8E8]" />
-          <span>{IDENTITY.coordinates}</span>
+          <span>{IDENTITY.location}</span>
         </div>
       </div>
     </section>

@@ -20,7 +20,7 @@ export function clearEnquiryMemoryCache(): void {
   memoryEnquiriesCache = null;
 }
 
-async function withFirestoreTimeout<T>(promise: Promise<T>, ms = 6000): Promise<T> {
+async function withFirestoreTimeout<T>(promise: Promise<T>, ms = 12000): Promise<T> {
   let timer: any;
   const timeoutPromise = new Promise<never>((_, reject) => {
     timer = setTimeout(() => {
@@ -56,7 +56,7 @@ export async function submitProjectEnquiry(
 
   // Authoritative write to Firestore
   try {
-    const docRef = await withFirestoreTimeout(addDoc(collection(db, 'contactEnquiries'), payload), 6000);
+    const docRef = await withFirestoreTimeout(addDoc(collection(db, 'contactEnquiries'), payload), 12000);
     firestoreId = docRef.id;
   } catch (err) {
     console.warn('Firestore enquiry write notice:', err);
@@ -88,7 +88,7 @@ export async function fetchAllEnquiries(forceRefresh = false): Promise<ProjectEn
 
   try {
     const q = query(collection(db, 'contactEnquiries'), orderBy('createdAt', 'desc'));
-    const snapshot = await withFirestoreTimeout(getDocs(q), 6000);
+    const snapshot = await withFirestoreTimeout(getDocs(q), 12000);
     const items: ProjectEnquiry[] = [];
     snapshot.forEach((docSnap) => {
       const d = docSnap.data();
