@@ -18,6 +18,32 @@ export const Header: React.FC<HeaderProps> = ({
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [settings, setSettings] = useState<AdminSiteSettings | null>(null);
   const dropdownRef = useRef<HTMLDivElement>(null);
+  const closeTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const handleDropdownMouseEnter = () => {
+    if (closeTimeoutRef.current) {
+      clearTimeout(closeTimeoutRef.current);
+      closeTimeoutRef.current = null;
+    }
+    setWorkDropdownOpen(true);
+  };
+
+  const handleDropdownMouseLeave = () => {
+    if (closeTimeoutRef.current) {
+      clearTimeout(closeTimeoutRef.current);
+    }
+    closeTimeoutRef.current = setTimeout(() => {
+      setWorkDropdownOpen(false);
+    }, 200);
+  };
+
+  useEffect(() => {
+    return () => {
+      if (closeTimeoutRef.current) {
+        clearTimeout(closeTimeoutRef.current);
+      }
+    };
+  }, []);
 
   useEffect(() => {
     let isMounted = true;
@@ -93,13 +119,16 @@ export const Header: React.FC<HeaderProps> = ({
                   key={item.id}
                   ref={dropdownRef}
                   className="relative group"
-                  onMouseEnter={() => setWorkDropdownOpen(true)}
-                  onMouseLeave={() => setWorkDropdownOpen(false)}
+                  onMouseEnter={handleDropdownMouseEnter}
+                  onMouseLeave={handleDropdownMouseLeave}
                 >
                   <button
                     id={`nav-${item.id}`}
                     type="button"
-                    onClick={() => setWorkDropdownOpen(!workDropdownOpen)}
+                    onClick={() => {
+                      if (closeTimeoutRef.current) clearTimeout(closeTimeoutRef.current);
+                      setWorkDropdownOpen(!workDropdownOpen);
+                    }}
                     aria-expanded={workDropdownOpen}
                     className={`
                       inline-flex items-center gap-1.5 py-1 transition-colors duration-200 cursor-pointer
@@ -113,25 +142,29 @@ export const Header: React.FC<HeaderProps> = ({
                     )}
                   </button>
 
-                  {/* Dropdown Menu */}
+                  {/* Dropdown Menu with continuous hover bridge (pt-2) */}
                   {workDropdownOpen && (
                     <div
-                      className="absolute top-full left-0 mt-2 w-44 rounded-[6px] bg-[#0D0D0D] border border-[#22252A] shadow-2xl py-1.5 z-50 animate-in fade-in slide-in-from-top-1 duration-150"
+                      className="absolute top-full left-0 pt-2 w-44 z-50 animate-in fade-in slide-in-from-top-1 duration-150"
+                      onMouseEnter={handleDropdownMouseEnter}
+                      onMouseLeave={handleDropdownMouseLeave}
                     >
-                      <div className="px-3 py-1 text-[9px] font-mono text-[#6F7682] tracking-[0.12em] uppercase border-b border-[#17191D] mb-1">
-                        DISCIPLINES
+                      <div className="rounded-[6px] bg-[#0D0D0D] border border-[#22252A] shadow-2xl py-1.5">
+                        <div className="px-3 py-1 text-[9px] font-mono text-[#6F7682] tracking-[0.12em] uppercase border-b border-[#17191D] mb-1">
+                          DISCIPLINES
+                        </div>
+                        {item.dropdown.map((subItem) => (
+                          <button
+                            key={subItem.id}
+                            id={`nav-sub-${subItem.id}`}
+                            onClick={(e) => handleLinkClick(subItem.id, e)}
+                            className="w-full text-left px-3 py-2 text-[12px] font-mono text-[#A7ADB7] hover:text-[#F2F4F7] hover:bg-[#111111] hover:pl-4 transition-all duration-150 cursor-pointer flex items-center justify-between"
+                          >
+                            <span>{subItem.label}</span>
+                            <span className="text-[10px] text-[#6F7682]">0{subItem.id === 'work-web' ? '1' : subItem.id === 'work-video' ? '2' : '3'}</span>
+                          </button>
+                        ))}
                       </div>
-                      {item.dropdown.map((subItem) => (
-                        <button
-                          key={subItem.id}
-                          id={`nav-sub-${subItem.id}`}
-                          onClick={(e) => handleLinkClick(subItem.id, e)}
-                          className="w-full text-left px-3 py-2 text-[12px] font-mono text-[#A7ADB7] hover:text-[#F2F4F7] hover:bg-[#111111] hover:pl-4 transition-all duration-150 cursor-pointer flex items-center justify-between"
-                        >
-                          <span>{subItem.label}</span>
-                          <span className="text-[10px] text-[#6F7682]">0{subItem.id === 'work-web' ? '1' : subItem.id === 'work-video' ? '2' : '3'}</span>
-                        </button>
-                      ))}
                     </div>
                   )}
                 </div>

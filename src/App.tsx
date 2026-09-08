@@ -345,8 +345,7 @@ function AppContent() {
             {/* 3. SPECIALIZED SERVICES */}
             <ServicesSection
               onServiceSelect={(serviceKey) => {
-                showToast(`Selected ${serviceKey.toUpperCase()} service. Ready to discuss scope.`);
-                handleNavigate('contact');
+                handleNavigate(serviceKey);
               }}
             />
 

@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">
+  <rect width="100" height="100" rx="24" fill="#131722"/>
+  <!-- 4 concentric spiral arcs in vibrant turquoise green -->
+  <g fill="none" stroke="#00E59B" stroke-linecap="round" stroke-linejoin="round">
+    <!-- Outer Arc -->
+    <path d="M 88 56 A 38 38 0 0 0 12 56" stroke-width="5.5"/>
+    <!-- Second Arc -->
+    <path d="M 72 72 A 30 30 0 1 0 30 30" stroke-width="5.5"/>
+    <!-- Third Arc -->
+    <path d="M 48 76 A 23 23 0 1 0 48 30" stroke-width="5.5"/>
+    <!-- Inner Arc -->
+    <path d="M 38 65 A 14 14 0 0 0 58 45" stroke-width="5.5"/>
+  </g>
+</svg>

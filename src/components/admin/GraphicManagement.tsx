@@ -347,20 +347,21 @@ export const GraphicManagement: React.FC<GraphicManagementProps> = ({
 
       {/* Add / Edit Modal Form */}
       {isFormOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-[#000000]/80 backdrop-blur-sm overflow-y-auto">
-          <div className="bg-[#0D0E12] border border-[#2A2E37] rounded-xl max-w-2xl w-full p-6 my-8 shadow-2xl space-y-6">
+        <div className="fixed inset-0 z-50 overflow-y-auto p-3 sm:p-4 bg-[#000000]/80 backdrop-blur-sm flex justify-center items-start min-h-screen">
+          <div className="bg-[#0D0E12] border border-[#2A2E37] rounded-xl max-w-2xl w-full p-4 sm:p-6 my-4 sm:my-8 shadow-2xl space-y-5 sm:space-y-6">
             <div className="flex items-center justify-between border-b border-[#22252A] pb-4">
               <div>
                 <div className="font-mono text-xs text-[#A8CCFC] uppercase tracking-wider">
                   {editingGraphic ? 'UPDATE GRAPHIC' : 'NEW CREATIVE ASSET'}
                 </div>
-                <h2 className="text-xl font-bold font-sans text-[#F2F4F7] mt-0.5">
+                <h2 className="text-lg sm:text-xl font-bold font-sans text-[#F2F4F7] mt-0.5">
                   {editingGraphic ? 'EDIT GRAPHIC WORK' : '+ ADD GRAPHIC'}
                 </h2>
               </div>
               <button
                 onClick={() => setIsFormOpen(false)}
-                className="text-[#6F7682] hover:text-[#F2F4F7] p-1 cursor-pointer"
+                className="text-[#6F7682] hover:text-[#F2F4F7] p-1.5 cursor-pointer rounded hover:bg-[#14171E] transition-colors"
+                aria-label="Close modal"
               >
                 <X className="w-5 h-5" />
               </button>
@@ -440,19 +441,22 @@ export const GraphicManagement: React.FC<GraphicManagementProps> = ({
                 </div>
               </div>
 
-              {/* Tools & Badge Label */}
+              {/* Category & Badge Label */}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div className="space-y-1.5">
                   <label className="font-mono text-xs text-[#A7ADB7] tracking-wider uppercase block">
-                    TOOLS (COMMA SEPARATED)
+                    CATEGORY (FOR FILTERING)
                   </label>
-                  <input
-                    type="text"
-                    value={formToolsInput}
-                    onChange={(e) => setFormToolsInput(e.target.value)}
-                    placeholder="Adobe Photoshop, Adobe Illustrator, Canva"
-                    className="w-full bg-[#050608] border border-[#22252A] focus:border-[#A8CCFC] rounded-lg py-2 px-3 text-xs text-[#F2F4F7] font-mono focus:outline-none"
-                  />
+                  <select
+                    value={formCategory}
+                    onChange={(e) => setFormCategory(e.target.value)}
+                    className="w-full bg-[#050608] border border-[#22252A] focus:border-[#A8CCFC] rounded-lg py-2 px-3 text-xs text-[#F2F4F7] font-mono focus:outline-none cursor-pointer"
+                  >
+                    <option value="posters">Posters & Print</option>
+                    <option value="branding">Branding & Identity</option>
+                    <option value="social">Social Media Creatives</option>
+                    <option value="merchandise">Merchandise & Apparel</option>
+                  </select>
                 </div>
 
                 <div className="space-y-1.5">
@@ -467,6 +471,20 @@ export const GraphicManagement: React.FC<GraphicManagementProps> = ({
                     className="w-full bg-[#050608] border border-[#22252A] focus:border-[#A8CCFC] rounded-lg py-2 px-3 text-xs text-[#F2F4F7] font-mono focus:outline-none"
                   />
                 </div>
+              </div>
+
+              {/* Tools */}
+              <div className="space-y-1.5">
+                <label className="font-mono text-xs text-[#A7ADB7] tracking-wider uppercase block">
+                  TOOLS (COMMA SEPARATED)
+                </label>
+                <input
+                  type="text"
+                  value={formToolsInput}
+                  onChange={(e) => setFormToolsInput(e.target.value)}
+                  placeholder="Adobe Photoshop, Adobe Illustrator, Canva"
+                  className="w-full bg-[#050608] border border-[#22252A] focus:border-[#A8CCFC] rounded-lg py-2 px-3 text-xs text-[#F2F4F7] font-mono focus:outline-none"
+                />
               </div>
 
               {/* Display Order & Featured */}
@@ -484,7 +502,7 @@ export const GraphicManagement: React.FC<GraphicManagementProps> = ({
                   />
                 </div>
 
-                <div className="flex items-center gap-3 pt-6">
+                <div className="flex items-center gap-3 pt-2 sm:pt-6">
                   <input
                     type="checkbox"
                     id="graphicFeatured"
@@ -502,19 +520,19 @@ export const GraphicManagement: React.FC<GraphicManagementProps> = ({
               </div>
 
               {/* Modal Actions */}
-              <div className="flex items-center justify-end gap-3 pt-4 border-t border-[#22252A]">
+              <div className="flex flex-col-reverse sm:flex-row items-stretch sm:items-center justify-end gap-2.5 sm:gap-3 pt-4 border-t border-[#22252A]">
                 <button
                   type="button"
                   onClick={() => setIsFormOpen(false)}
                   disabled={isSaving}
-                  className="px-4 py-2 bg-[#14171E] hover:bg-[#1E232E] text-[#A7ADB7] hover:text-[#F2F4F7] font-mono text-xs rounded border border-[#22252A] transition-colors cursor-pointer"
+                  className="w-full sm:w-auto px-4 py-2.5 sm:py-2 bg-[#14171E] hover:bg-[#1E232E] text-[#A7ADB7] hover:text-[#F2F4F7] font-mono text-xs rounded border border-[#22252A] transition-colors cursor-pointer text-center"
                 >
                   CANCEL
                 </button>
                 <button
                   type="submit"
                   disabled={isSaving}
-                  className="px-5 py-2 bg-[#A8CCFC] hover:bg-[#BEDBFF] text-[#000000] font-mono text-xs font-bold rounded flex items-center gap-1.5 transition-colors cursor-pointer"
+                  className="w-full sm:w-auto px-5 py-2.5 sm:py-2 bg-[#A8CCFC] hover:bg-[#BEDBFF] text-[#000000] font-mono text-xs font-bold rounded flex items-center justify-center gap-1.5 transition-colors cursor-pointer text-center"
                 >
                   {isSaving ? 'SAVING...' : editingGraphic ? 'SAVE CHANGES' : 'ADD GRAPHIC'}
                 </button>

@@ -63,7 +63,7 @@ export const SelectedWorkSection: React.FC<SelectedWorkSectionProps> = ({
   };
 
   return (
-    <section id="work" className="w-full bg-[#000000] py-16 sm:py-24 border-t border-[#17191D]">
+    <section id="work" className="w-full bg-[#000000] pt-6 xs:pt-8 sm:pt-24 pb-16 sm:pb-24 border-t border-[#17191D]">
       <div className="max-w-[1360px] mx-auto px-4 sm:px-6 lg:px-8">
         
         {/* SECTION HEADER */}

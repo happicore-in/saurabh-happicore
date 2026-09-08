@@ -76,7 +76,7 @@ export const BASELINE_WEB_PROJECTS: AdminWebProject[] = [
     liveUrl: FLAGSHIP_WEB_PROJECT.liveUrl || 'https://sportify.iitm.ac.in',
     githubUrl: FLAGSHIP_WEB_PROJECT.githubUrl || 'https://github.com/happicore/sportify-platform',
     technologies: FLAGSHIP_WEB_PROJECT.technologies,
-    featured: true,
+    featured: false,
     order: 1,
     badgeLabel: FLAGSHIP_WEB_PROJECT.badgeLabel,
     category: FLAGSHIP_WEB_PROJECT.filterType,
@@ -89,7 +89,7 @@ export const BASELINE_WEB_PROJECTS: AdminWebProject[] = [
     liveUrl: p.liveUrl,
     githubUrl: p.githubUrl,
     technologies: p.technologies,
-    featured: idx < 2,
+    featured: false,
     order: idx + 2,
     badgeLabel: p.badgeLabel,
     category: p.filterType,
@@ -107,7 +107,7 @@ export const BASELINE_VIDEO_PROJECTS: AdminVideoProject[] = [
     wherePosted: 'YouTube & Fest Screens',
     socialMediaLink: FEATURED_VIDEO_PROJECT.socialMediaLink || 'https://youtube.com',
     tools: FEATURED_VIDEO_PROJECT.technologies,
-    featured: true,
+    featured: false,
     order: 1,
     category: FEATURED_VIDEO_PROJECT.category,
     aspectRatio: '16:9',
@@ -138,7 +138,7 @@ export const BASELINE_GRAPHIC_PROJECTS: AdminGraphicProject[] = [
     wherePosted: 'Campus Billboards & Digital Screens',
     socialMediaLink: 'https://instagram.com',
     tools: FEATURED_GRAPHIC_PROJECT.technologies,
-    featured: true,
+    featured: false,
     order: 1,
     category: FEATURED_GRAPHIC_PROJECT.category,
     badgeLabel: FEATURED_GRAPHIC_PROJECT.badgeLabel,
@@ -151,7 +151,7 @@ export const BASELINE_GRAPHIC_PROJECTS: AdminGraphicProject[] = [
     wherePosted: p.categoryLabel || 'Print & Social',
     socialMediaLink: p.externalPostLink || 'https://behance.net',
     tools: p.technologies,
-    featured: idx < 2,
+    featured: false,
     order: idx + 2,
     category: p.category,
     badgeLabel: p.badgeLabel,
@@ -407,11 +407,7 @@ export const BASELINE_SITE_SETTINGS: AdminSiteSettings = {
   home: {
     tagline: 'CREATIVE MULTIDISCIPLINARY',
     shortIntro: 'Video Editor, Graphic Designer & Web Developer based in Mau, UP. Bridging creative storytelling with modern computational web interfaces.',
-    featuredWorkIds: [
-      'sportify-digital-platform',
-      'paradox-2026-aftermovie',
-      'campusrun-2025-marathon-poster',
-    ],
+    featuredWorkIds: [],
     happicoreDescription: 'Independent creative atelier and digital development practice founded by Saurabh.',
     availability: 'AVAILABLE FOR WORK',
   },
@@ -537,7 +533,14 @@ export async function getWebProjects(forceRefresh = false): Promise<AdminWebProj
       // 2. Primary & ONLY persistent source of truth: Firestore database
       const snap = await withFirestoreTimeout(getDocs(collection(db, 'webProjects')), 12000);
       const list: AdminWebProject[] = [];
-      snap.forEach((d) => list.push({ ...d.data(), id: d.id } as AdminWebProject));
+      snap.forEach((d) => {
+        const raw = d.data();
+        list.push({
+          ...raw,
+          id: d.id,
+          featured: Boolean(raw.featured),
+        } as AdminWebProject);
+      });
       list.sort((a, b) => (a.order || 0) - (b.order || 0));
 
       // Successful Firestore query is authoritative (even if collection is empty [])
@@ -565,6 +568,7 @@ export async function saveWebProject(project: AdminWebProject): Promise<AdminWeb
   const data: AdminWebProject = {
     ...project,
     id,
+    featured: Boolean(project.featured),
     updatedAt: nowIso,
     createdAt: project.createdAt || nowIso,
   };
@@ -574,6 +578,12 @@ export async function saveWebProject(project: AdminWebProject): Promise<AdminWeb
   // Authoritative write to Firestore FIRST. If this throws, nothing is mutated.
   try {
     await setDoc(doc(db, 'webProjects', id), sanitized);
+    console.log('[portfolioDataService.saveWebProject SUCCESS]', {
+      id,
+      title: data.title,
+      featured: data.featured,
+      category: data.category,
+    });
   } catch (err: any) {
     console.error('[portfolioDataService.saveWebProject ERROR]', {
       code: err?.code,
@@ -640,7 +650,14 @@ export async function getVideoProjects(forceRefresh = false): Promise<AdminVideo
     try {
       const snap = await withFirestoreTimeout(getDocs(collection(db, 'videoProjects')), 12000);
       const list: AdminVideoProject[] = [];
-      snap.forEach((d) => list.push({ ...d.data(), id: d.id } as AdminVideoProject));
+      snap.forEach((d) => {
+        const raw = d.data();
+        list.push({
+          ...raw,
+          id: d.id,
+          featured: Boolean(raw.featured),
+        } as AdminVideoProject);
+      });
       list.sort((a, b) => (a.order || 0) - (b.order || 0));
 
       memoryCache.video = list;
@@ -666,6 +683,7 @@ export async function saveVideoProject(project: AdminVideoProject): Promise<Admi
   const data: AdminVideoProject = {
     ...project,
     id,
+    featured: Boolean(project.featured),
     updatedAt: nowIso,
     createdAt: project.createdAt || nowIso,
   };
@@ -674,6 +692,12 @@ export async function saveVideoProject(project: AdminVideoProject): Promise<Admi
 
   try {
     await setDoc(doc(db, 'videoProjects', id), sanitized);
+    console.log('[portfolioDataService.saveVideoProject SUCCESS]', {
+      id,
+      title: data.title,
+      featured: data.featured,
+      category: data.category,
+    });
   } catch (err: any) {
     console.error('[portfolioDataService.saveVideoProject ERROR]', {
       code: err?.code,
@@ -735,7 +759,14 @@ export async function getGraphicProjects(forceRefresh = false): Promise<AdminGra
     try {
       const snap = await withFirestoreTimeout(getDocs(collection(db, 'graphicProjects')), 12000);
       const list: AdminGraphicProject[] = [];
-      snap.forEach((d) => list.push({ ...d.data(), id: d.id } as AdminGraphicProject));
+      snap.forEach((d) => {
+        const raw = d.data();
+        list.push({
+          ...raw,
+          id: d.id,
+          featured: Boolean(raw.featured),
+        } as AdminGraphicProject);
+      });
       list.sort((a, b) => (a.order || 0) - (b.order || 0));
 
       memoryCache.graphic = list;
@@ -761,6 +792,7 @@ export async function saveGraphicProject(project: AdminGraphicProject): Promise<
   const data: AdminGraphicProject = {
     ...project,
     id,
+    featured: Boolean(project.featured),
     updatedAt: nowIso,
     createdAt: project.createdAt || nowIso,
   };
@@ -769,6 +801,12 @@ export async function saveGraphicProject(project: AdminGraphicProject): Promise<
 
   try {
     await setDoc(doc(db, 'graphicProjects', id), sanitized);
+    console.log('[portfolioDataService.saveGraphicProject SUCCESS]', {
+      id,
+      title: data.title,
+      featured: data.featured,
+      category: data.category,
+    });
   } catch (err: any) {
     console.error('[portfolioDataService.saveGraphicProject ERROR]', {
       code: err?.code,
@@ -1107,6 +1145,7 @@ export async function getPublicWebProjects(): Promise<WebProjectItem[]> {
       ? p.category
       : 'fullstack',
     categoryLabel: p.category ? p.category.toUpperCase() : 'WEB DEVELOPMENT',
+    category: p.category || '',
     description: p.description,
     image: p.image || '',
     technologies: p.technologies && p.technologies.length > 0 ? p.technologies : ['React', 'Tailwind CSS'],
@@ -1238,141 +1277,124 @@ export async function getPublicHomeFeaturedProjects(): Promise<PublicHomeFeature
   ]);
 
   const rawHome = (settings as any).homeContent || settings.home || {};
-  const featuredIds: string[] =
-    rawHome.featuredWorkIds ||
+  const settingsFeaturedIds: string[] =
     rawHome.featuredProjectIds ||
-    settings.home?.featuredWorkIds ||
+    rawHome.featuredWorkIds ||
     settings.home?.featuredProjectIds ||
+    settings.home?.featuredWorkIds ||
     [];
 
+  const formatVideoItem = (vid: AdminVideoProject): PublicHomeFeaturedItem => ({
+    id: vid.id,
+    type: 'video',
+    title: vid.title,
+    categoryLabel: vid.category ? `VIDEO / ${vid.category.toUpperCase()}` : 'VIDEO / FESTIVAL AFTERMOVIE',
+    year: vid.year || '2026',
+    image: vid.thumbnail || 'https://images.unsplash.com/photo-1492684223066-81342ee5ff30?q=80&w=1200&auto=format&fit=crop',
+    description: vid.description || 'High-retention cinematic video production with rhythmic pacing and color grading.',
+    badgeLabel: vid.aspectRatio === '9:16' ? 'REEL • 9:16' : 'AFTERMOVIE • 4K',
+    tags: vid.tools && vid.tools.length > 0 ? vid.tools.slice(0, 2) : ['PACING & SOUND DESIGN', 'COLOR GRADING'],
+    role: vid.role || 'DIRECTION & EDIT',
+    aspectRatio: vid.aspectRatio,
+    stats: vid.duration ? `Runtime: ${vid.duration}` : undefined,
+    googleDriveUrl: vid.googleDriveUrl,
+    deliverables: vid.deliverables,
+    tools: vid.tools,
+  });
+
+  const formatWebItem = (web: AdminWebProject): PublicHomeFeaturedItem => ({
+    id: web.id,
+    type: 'web',
+    title: web.title,
+    categoryLabel: web.category ? `WEB / ${web.category.toUpperCase()}` : 'WEB / INTERACTIVE',
+    year: web.year || '2026',
+    image: web.image || 'https://images.unsplash.com/photo-1546519638-68e109498ffc?q=80&w=1200&auto=format&fit=crop',
+    description: web.description || 'Modern responsive digital presence with bespoke interactions and scalable architecture.',
+    badgeLabel: web.badgeLabel || 'WEB INTERFACE',
+    tags: web.technologies && web.technologies.length > 0 ? web.technologies.slice(0, 2) : ['REACT', 'TAILWIND'],
+    role: web.role || webRole(web),
+    liveUrl: web.liveUrl,
+    deliverables: web.deliverables,
+    tools: web.technologies,
+  });
+
+  const formatGraphicItem = (grp: AdminGraphicProject): PublicHomeFeaturedItem => ({
+    id: grp.id,
+    type: 'graphic',
+    title: grp.title,
+    categoryLabel: grp.category ? `GRAPHIC / ${grp.category.toUpperCase()}` : 'GRAPHIC / POSTERS & PRINT',
+    year: grp.year || '2026',
+    image: grp.image || 'https://images.unsplash.com/photo-1514525253161-7a46d19cd819?q=80&w=1200&auto=format&fit=crop',
+    description: grp.description || 'Deliberate typography and visual hierarchy crafted for print and digital campaigns.',
+    badgeLabel: grp.badgeLabel || 'POSTERS & IDENTITY',
+    tags: grp.tools && grp.tools.length > 0 ? grp.tools.slice(0, 2) : ['PHOTOSHOP', 'TYPOGRAPHY'],
+    role: grp.role || 'CREATIVE DIRECTION',
+    deliverables: grp.deliverables,
+    tools: grp.tools,
+  });
+
   const resolved: PublicHomeFeaturedItem[] = [];
+  const addedIds = new Set<string>();
 
-  // Match IDs against currently existing Firestore projects. Skip any deleted or missing IDs!
-  if (featuredIds.length > 0) {
-    for (const id of featuredIds) {
-      const vid = videos.find((v) => v.id === id);
-      if (vid) {
-        resolved.push({
-          id: vid.id,
-          type: 'video',
-          title: vid.title,
-          categoryLabel: vid.category ? `VIDEO / ${vid.category.toUpperCase()}` : 'VIDEO / FESTIVAL AFTERMOVIE',
-          year: vid.year || '2026',
-          image: vid.thumbnail || 'https://images.unsplash.com/photo-1492684223066-81342ee5ff30?q=80&w=1200&auto=format&fit=crop',
-          description: vid.description || 'High-retention cinematic video production with rhythmic pacing and color grading.',
-          badgeLabel: vid.aspectRatio === '9:16' ? 'REEL • 9:16' : 'AFTERMOVIE • 4K',
-          tags: vid.tools && vid.tools.length > 0 ? vid.tools.slice(0, 2) : ['PACING & SOUND DESIGN', 'COLOR GRADING'],
-          role: vid.role || 'DIRECTION & EDIT',
-          aspectRatio: vid.aspectRatio,
-          stats: vid.duration ? `Runtime: ${vid.duration}` : undefined,
-          googleDriveUrl: vid.googleDriveUrl,
-          deliverables: vid.deliverables,
-          tools: vid.tools,
-        });
-        continue;
-      }
+  // 1. Gather all items where featured === true in database
+  const featuredVideos = videos.filter((v) => Boolean(v.featured));
+  const featuredWebs = webs.filter((w) => Boolean(w.featured));
+  const featuredGraphics = graphics.filter((g) => Boolean(g.featured));
 
-      const web = webs.find((w) => w.id === id);
-      if (web) {
-        resolved.push({
-          id: web.id,
-          type: 'web',
-          title: web.title,
-          categoryLabel: web.category ? `WEB / ${web.category.toUpperCase()}` : 'WEB / INTERACTIVE',
-          year: web.year || '2026',
-          image: web.image || 'https://images.unsplash.com/photo-1546519638-68e109498ffc?q=80&w=1200&auto=format&fit=crop',
-          description: web.description || 'Modern responsive digital presence with bespoke interactions and scalable architecture.',
-          badgeLabel: web.badgeLabel || 'WEB INTERFACE',
-          tags: web.technologies && web.technologies.length > 0 ? web.technologies.slice(0, 2) : ['REACT', 'TAILWIND'],
-          role: web.role || 'FULL-STACK DEVELOPMENT',
-          liveUrl: web.liveUrl,
-          deliverables: web.deliverables,
-          tools: web.technologies,
-        });
-        continue;
-      }
+  // 2. Prioritize featured video as the Top Hero on homepage
+  if (featuredVideos.length > 0) {
+    const heroVid = featuredVideos[0];
+    resolved.push(formatVideoItem(heroVid));
+    addedIds.add(heroVid.id);
+  }
 
-      const grp = graphics.find((g) => g.id === id);
-      if (grp) {
-        resolved.push({
-          id: grp.id,
-          type: 'graphic',
-          title: grp.title,
-          categoryLabel: grp.category ? `GRAPHIC / ${grp.category.toUpperCase()}` : 'GRAPHIC / POSTERS & PRINT',
-          year: grp.year || '2026',
-          image: grp.image || 'https://images.unsplash.com/photo-1514525253161-7a46d19cd819?q=80&w=1200&auto=format&fit=crop',
-          description: grp.description || 'Deliberate typography and visual hierarchy crafted for print and digital campaigns.',
-          badgeLabel: grp.badgeLabel || 'POSTERS & IDENTITY',
-          tags: grp.tools && grp.tools.length > 0 ? grp.tools.slice(0, 2) : ['PHOTOSHOP', 'TYPOGRAPHY'],
-          role: grp.role || 'CREATIVE DIRECTION',
-          deliverables: grp.deliverables,
-          tools: grp.tools,
-        });
-        continue;
-      }
+  // 3. Add any projects explicitly listed in settingsFeaturedIds
+  for (const id of settingsFeaturedIds) {
+    if (addedIds.has(id) || resolved.length >= 5) continue;
+    const v = videos.find((item) => item.id === id);
+    if (v) {
+      resolved.push(formatVideoItem(v));
+      addedIds.add(v.id);
+      continue;
+    }
+    const w = webs.find((item) => item.id === id);
+    if (w) {
+      resolved.push(formatWebItem(w));
+      addedIds.add(w.id);
+      continue;
+    }
+    const g = graphics.find((item) => item.id === id);
+    if (g) {
+      resolved.push(formatGraphicItem(g));
+      addedIds.add(g.id);
+      continue;
     }
   }
 
-  // If no explicit matches from featured IDs, resolve items marked as featured from live projects
+  // 4. Add any remaining projects that have featured === true
+  const remainingFeatured = [
+    ...featuredWebs.filter((w) => !addedIds.has(w.id)),
+    ...featuredGraphics.filter((g) => !addedIds.has(g.id)),
+    ...featuredVideos.filter((v) => !addedIds.has(v.id)),
+  ];
+
+  for (const item of remainingFeatured) {
+    if (resolved.length >= 5) break;
+    if ('wherePosted' in item && 'aspectRatio' in item) {
+      resolved.push(formatVideoItem(item as AdminVideoProject));
+    } else if ('liveUrl' in item) {
+      resolved.push(formatWebItem(item as AdminWebProject));
+    } else {
+      resolved.push(formatGraphicItem(item as AdminGraphicProject));
+    }
+    addedIds.add(item.id);
+  }
+
+  // 5. Safe fallback if nothing is marked featured yet
   if (resolved.length === 0) {
-    const featuredVid = videos.find((v) => v.featured);
-    const featuredWeb = webs.find((w) => w.featured);
-    const featuredGraphic = graphics.find((g) => g.featured);
-
-    if (featuredVid) {
-      resolved.push({
-        id: featuredVid.id,
-        type: 'video',
-        title: featuredVid.title,
-        categoryLabel: featuredVid.category ? `VIDEO / ${featuredVid.category.toUpperCase()}` : 'VIDEO / FESTIVAL AFTERMOVIE',
-        year: featuredVid.year || '2026',
-        image: featuredVid.thumbnail || 'https://images.unsplash.com/photo-1492684223066-81342ee5ff30?q=80&w=1200&auto=format&fit=crop',
-        description: featuredVid.description || 'High-retention cinematic video production with rhythmic pacing and color grading.',
-        badgeLabel: featuredVid.aspectRatio === '9:16' ? 'REEL • 9:16' : 'AFTERMOVIE • 4K',
-        tags: featuredVid.tools && featuredVid.tools.length > 0 ? featuredVid.tools.slice(0, 2) : ['PACING & SOUND DESIGN', 'COLOR GRADING'],
-        role: featuredVid.role || 'DIRECTION & EDIT',
-        aspectRatio: featuredVid.aspectRatio,
-        stats: featuredVid.duration ? `Runtime: ${featuredVid.duration}` : undefined,
-        googleDriveUrl: featuredVid.googleDriveUrl,
-        deliverables: featuredVid.deliverables,
-        tools: featuredVid.tools,
-      });
-    }
-
-    if (featuredWeb) {
-      resolved.push({
-        id: featuredWeb.id,
-        type: 'web',
-        title: featuredWeb.title,
-        categoryLabel: featuredWeb.category ? `WEB / ${featuredWeb.category.toUpperCase()}` : 'WEB / INTERACTIVE',
-        year: featuredWeb.year || '2026',
-        image: featuredWeb.image || 'https://images.unsplash.com/photo-1546519638-68e109498ffc?q=80&w=1200&auto=format&fit=crop',
-        description: featuredWeb.description || 'Modern responsive digital presence with bespoke interactions and scalable architecture.',
-        badgeLabel: featuredWeb.badgeLabel || 'WEB INTERFACE',
-        tags: featuredWeb.technologies && featuredWeb.technologies.length > 0 ? featuredWeb.technologies.slice(0, 2) : ['REACT', 'TAILWIND'],
-        role: webRole(featuredWeb),
-        liveUrl: featuredWeb.liveUrl,
-        deliverables: featuredWeb.deliverables,
-        tools: featuredWeb.technologies,
-      });
-    }
-
-    if (featuredGraphic) {
-      resolved.push({
-        id: featuredGraphic.id,
-        type: 'graphic',
-        title: featuredGraphic.title,
-        categoryLabel: featuredGraphic.category ? `GRAPHIC / ${featuredGraphic.category.toUpperCase()}` : 'GRAPHIC / POSTERS & PRINT',
-        year: featuredGraphic.year || '2026',
-        image: featuredGraphic.image || 'https://images.unsplash.com/photo-1514525253161-7a46d19cd819?q=80&w=1200&auto=format&fit=crop',
-        description: featuredGraphic.description || 'Deliberate typography and visual hierarchy crafted for print and digital campaigns.',
-        badgeLabel: featuredGraphic.badgeLabel || 'POSTERS & IDENTITY',
-        tags: featuredGraphic.tools && featuredGraphic.tools.length > 0 ? featuredGraphic.tools.slice(0, 2) : ['PHOTOSHOP', 'TYPOGRAPHY'],
-        role: featuredGraphic.role || 'CREATIVE DIRECTION',
-        deliverables: featuredGraphic.deliverables,
-        tools: featuredGraphic.tools,
-      });
-    }
+    if (videos.length > 0) resolved.push(formatVideoItem(videos[0]));
+    if (webs.length > 0) resolved.push(formatWebItem(webs[0]));
+    if (graphics.length > 0) resolved.push(formatGraphicItem(graphics[0]));
   }
 
   memoryCache.featuredHome = resolved;

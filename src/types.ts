@@ -72,6 +72,7 @@ export interface WebProjectItem {
   badgeLabel?: string;
   filterType: 'fullstack' | 'portfolios' | 'tools';
   categoryLabel: string;
+  category?: string;
   description: string;
   image: string;
   technologies: string[];

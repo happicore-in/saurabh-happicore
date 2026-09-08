@@ -5,6 +5,11 @@ import {
   AdminVideoProject,
   AdminGraphicProject,
 } from '../../types/admin';
+import {
+  saveWebProject,
+  saveVideoProject,
+  saveGraphicProject,
+} from '../../services/portfolioDataService';
 import { CloudinaryImageUploader } from './CloudinaryImageUploader';
 import {
   Settings,
@@ -42,15 +47,24 @@ export const SiteSettingsManagement: React.FC<SiteSettingsManagementProps> = ({
       tagline: 'CREATIVE MULTIDISCIPLINARY',
       shortIntro: 'Video Editor, Graphic Designer & Web Developer based in Mau, UP. Bridging creative storytelling with modern computational web interfaces.',
       profileImage: '',
-      featuredWorkIds: ['sportify-digital-platform', 'paradox-2026-aftermovie', 'campusrun-2025-marathon-poster'],
+      featuredWorkIds: [],
       happicoreDescription: 'Independent creative atelier and digital development practice founded by Saurabh.',
       availability: 'AVAILABLE FOR WORK',
     };
-    const workIds = rawHome.featuredWorkIds || rawHome.featuredProjectIds || [];
+    // Selected projects are driven directly from actual saved DB values where p.featured === true
+    const dbFeaturedIds = [
+      ...webProjects.filter((p) => Boolean(p.featured)).map((p) => p.id),
+      ...videoProjects.filter((p) => Boolean(p.featured)).map((p) => p.id),
+      ...graphicProjects.filter((p) => Boolean(p.featured)).map((p) => p.id),
+    ];
+    const initialFeaturedIds = dbFeaturedIds.length > 0
+      ? dbFeaturedIds.slice(0, 5)
+      : [];
+
     const mergedHome = {
       ...rawHome,
-      featuredWorkIds: workIds,
-      featuredProjectIds: workIds,
+      featuredWorkIds: initialFeaturedIds,
+      featuredProjectIds: initialFeaturedIds,
     };
     const defaultStats = [
       { id: 'stat-roles', label: 'ROLES & CHAIRS', value: '3+', order: 1 },
@@ -110,39 +124,60 @@ export const SiteSettingsManagement: React.FC<SiteSettingsManagementProps> = ({
     }
   };
 
-  const toggleFeaturedProject = (projectId: string) => {
-    const current =
+  const toggleFeaturedProject = async (proj: { id: string; title: string; projectType: 'web' | 'video' | 'graphic'; featured: boolean }) => {
+    const current: string[] =
       formData.homeContent?.featuredProjectIds ||
       formData.home?.featuredWorkIds ||
       [];
+    const isCurrentlySelected = current.includes(proj.id);
     let updated: string[];
-    if (current.includes(projectId)) {
-      updated = current.filter((id: string) => id !== projectId);
+
+    if (isCurrentlySelected) {
+      updated = current.filter((id: string) => id !== proj.id);
     } else {
       if (current.length >= 5) {
         showToast('Maximum 5 projects can be featured on homepage.');
         return;
       }
-      updated = [...current, projectId];
+      updated = [...current, proj.id];
     }
+
+    const nextFeatured = !isCurrentlySelected;
     const updatedHome = {
       ...(formData.home || {}),
       ...(formData.homeContent || {}),
       featuredProjectIds: updated,
       featuredWorkIds: updated,
     };
+
     setFormData({
       ...formData,
       home: updatedHome,
       homeContent: updatedHome,
     });
+
+    // Update the item's featured state directly in Firestore
+    try {
+      if (proj.projectType === 'web') {
+        const item = webProjects.find((w) => w.id === proj.id);
+        if (item) await saveWebProject({ ...item, featured: nextFeatured });
+      } else if (proj.projectType === 'video') {
+        const item = videoProjects.find((v) => v.id === proj.id);
+        if (item) await saveVideoProject({ ...item, featured: nextFeatured });
+      } else if (proj.projectType === 'graphic') {
+        const item = graphicProjects.find((g) => g.id === proj.id);
+        if (item) await saveGraphicProject({ ...item, featured: nextFeatured });
+      }
+    } catch (err) {
+      console.warn('Failed to update project featured state:', err);
+    }
   };
 
   // Combine projects for the featured picker
   const allProjects = [
-    ...webProjects.map((p) => ({ id: p.id, title: p.title, type: 'Web Development' })),
-    ...videoProjects.map((p) => ({ id: p.id, title: p.title, type: 'Video Editing' })),
-    ...graphicProjects.map((p) => ({ id: p.id, title: p.title, type: 'Graphic Design' })),
+    ...webProjects.map((p) => ({ id: p.id, title: p.title, type: 'Web Development', projectType: 'web' as const, featured: Boolean(p.featured) })),
+    ...videoProjects.map((p) => ({ id: p.id, title: p.title, type: 'Video Editing', projectType: 'video' as const, featured: Boolean(p.featured) })),
+    ...graphicProjects.map((p) => ({ id: p.id, title: p.title, type: 'Graphic Design', projectType: 'graphic' as const, featured: Boolean(p.featured) })),
   ];
 
   return (
@@ -714,7 +749,7 @@ export const SiteSettingsManagement: React.FC<SiteSettingsManagementProps> = ({
                     FEATURED HOMEPAGE WORK (CHOOSE UP TO 5 PROJECTS)
                   </label>
                   <span className="font-mono text-[11px] text-[#F5A623]">
-                    {formData.homeContent.featuredProjectIds?.length || 0} / 5 SELECTED
+                    {(formData.homeContent?.featuredProjectIds || formData.home?.featuredWorkIds || []).length} / 5 SELECTED
                   </span>
                 </div>
 
@@ -725,12 +760,12 @@ export const SiteSettingsManagement: React.FC<SiteSettingsManagementProps> = ({
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 max-h-64 overflow-y-auto pr-1">
                   {allProjects.map((proj) => {
                     const isSelected =
-                      formData.homeContent.featuredProjectIds?.includes(proj.id) || false;
+                      (formData.homeContent?.featuredProjectIds || formData.home?.featuredWorkIds || []).includes(proj.id);
                     return (
                       <button
                         key={proj.id}
                         type="button"
-                        onClick={() => toggleFeaturedProject(proj.id)}
+                        onClick={() => toggleFeaturedProject(proj)}
                         className={`p-2.5 rounded-lg border text-left font-mono text-xs transition-colors flex items-center justify-between cursor-pointer ${
                           isSelected
                             ? 'bg-[#151B27] border-[#8FB8E8] text-[#F2F4F7]'
