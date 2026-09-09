@@ -3,6 +3,7 @@ import { X, Play, ExternalLink, Calendar, Tag, ShieldCheck, Sparkles, Film, Arro
 import paradoxImg from '../../assets/images/paradox_aftermovie_1788625281034.jpg';
 import webDevImg from '../../assets/images/web_dev_project_1788625300809.jpg';
 import { getAnyProjectDetails } from '../../services/portfolioDataService';
+import { getToolLogo } from '../../utils/toolLogos';
 
 interface ProjectDetailModalProps {
   projectId: string | null;
@@ -215,14 +216,20 @@ export const ProjectDetailModal: React.FC<ProjectDetailModalProps> = ({
                 SOFTWARE &amp; ENVIRONMENT
               </span>
               <div className="flex flex-wrap gap-1.5 sm:gap-2">
-                {project.tools.map((t) => (
-                  <span
-                    key={t}
-                    className="px-2.5 py-1 bg-[#0D0D0D] border border-[#22252A] text-[#F2F4F7] font-mono text-[10px] sm:text-[11px] uppercase rounded"
-                  >
-                    {t}
-                  </span>
-                ))}
+                {project.tools.map((t) => {
+                  const logo = getToolLogo(t);
+                  return (
+                    <span
+                      key={t}
+                      className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-[#0D0D0D] border border-[#22252A] text-[#F2F4F7] font-mono text-[10px] sm:text-[11px] uppercase rounded hover:border-[#343943] transition-colors"
+                    >
+                      {logo && (
+                        <img src={logo} alt="" className="w-3.5 h-3.5 object-contain" />
+                      )}
+                      <span>{t}</span>
+                    </span>
+                  );
+                })}
               </div>
 
               {project.stats && (

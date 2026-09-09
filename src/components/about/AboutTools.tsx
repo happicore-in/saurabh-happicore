@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Film, Palette, Terminal, Wrench } from 'lucide-react';
 import { TOOLS_CATEGORIES, ToolCategory } from '../../data/aboutData';
 import { getAboutData } from '../../services/portfolioDataService';
+import { getToolLogo } from '../../utils/toolLogos';
 
 export const AboutTools: React.FC = () => {
   const [categories, setCategories] = useState<ToolCategory[]>(TOOLS_CATEGORIES);
@@ -99,21 +100,31 @@ export const AboutTools: React.FC = () => {
 
             {/* Tool Items */}
             <div className="space-y-2.5">
-              {cat.tools.map((tool) => (
-                <div
-                  key={tool.name}
-                  className="flex items-center justify-between p-2.5 bg-[#0D0D0D] border border-[#1C1F24] rounded-[6px] hover:border-[#2A2E36] transition-colors"
-                >
-                  <span className="font-heading font-semibold text-xs sm:text-sm text-[#F2F4F7]">
-                    {tool.name}
-                  </span>
-                  {tool.tag && (
-                    <span className="font-mono text-[9px] uppercase tracking-wider px-2 py-0.5 bg-[#17191D] text-[#A7ADB7] rounded">
-                      {tool.tag}
-                    </span>
-                  )}
-                </div>
-              ))}
+              {cat.tools.map((tool) => {
+                const logo = getToolLogo(tool.name);
+                return (
+                  <div
+                    key={tool.name}
+                    className="flex items-center justify-between p-2.5 bg-[#0D0D0D] border border-[#1C1F24] rounded-[6px] hover:border-[#2A2E36] transition-colors"
+                  >
+                    <div className="flex items-center gap-2.5 min-w-0">
+                      {logo && (
+                        <div className="w-5 h-5 rounded-[4px] bg-[#14171D] p-0.5 border border-[#242831] flex-shrink-0 flex items-center justify-center">
+                          <img src={logo} alt="" className="w-full h-full object-contain" />
+                        </div>
+                      )}
+                      <span className="font-heading font-semibold text-xs sm:text-sm text-[#F2F4F7] truncate">
+                        {tool.name}
+                      </span>
+                    </div>
+                    {tool.tag && (
+                      <span className="font-mono text-[9px] uppercase tracking-wider px-2 py-0.5 bg-[#17191D] text-[#A7ADB7] rounded flex-shrink-0">
+                        {tool.tag}
+                      </span>
+                    )}
+                  </div>
+                );
+              })}
             </div>
           </div>
         ))}
